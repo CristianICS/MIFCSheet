@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Forest Inventory</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
+    <!-- Custom classes with object and functions -->
+    <script src="classes.js"></script>
+    <!-- Event handlers and app functionality -->
+    <script src="app.js" defer></script>
+    <!-- Predefined classes for downloading proccess -->
+    <!-- FileSaver for saveAs function -->
+    <script src="libs/FileSaver.min.js"></script> 
+    <script src="libs/jszip.min.js"></script>
+    <script src="libs/jszip-utils.js"></script>
+    <!-- Species codes -->
+    <script src="listado_especies.js"></script>
+  </head>
+  <body>
+    <div style="position: absolute; right: 1vw; top: 1vh;">
+      <a href="https://github.com/CristianICS/MIFCSheet" target="_blank">
+        <img style="width:2vw; max-width:5vw" src="logos/github.svg"></img>
+      </a>
+    </div>
+    <!-- Block app when an image is going to be inserted -->
+    <div id="block-app-div" class="block-app-div" style="display:none;"></div>
+    <h1 id="app-title">Forest Inventory</h1>
+    <!-- Inventory add/metadata panel -->
+    <form id="inventory-form">
+      <fieldset>
+        <legend id="app-main-form-title">Init new inventory</legend>
+        <p>
+          <label for="inventory-name">Name</label>
+          <input type="text" id="inventory-name" class="inv-mtd" required />
+          <label for="inventory-creator">Creator</label>
+          <input type="text" id="inventory-creator" class="inv-mtd" />
+        </p>
+        <p>
+          <label for="inventory_init_point">Initial point</label>
+          <input type="text" id="inventory-init_point" class="inv-mtd" />
+          <label for="inventory-stop_point">Final point</label>
+          <input type="text" id="inventory-stop_point" class="inv-mtd" />
+        </p>
+        <p>
+          <label for="inventory-comments">Comments</label>
+          <textarea id="inventory-comments" class="inv-mtd"></textarea> 
+        </p>
+      </fieldset>
+      <p>
+        <button type="submit" id="app-main-form-btn">Create inventory</button>
+      </p>
+    </form>
+    <section id="saved-inventories"></section>
+    <section id="inventory-sheet"></section>
+    <form id="rows-form" style="display:none;" autocomplete="off">
+      <fieldset id="rows-fieldset" class="rows-fieldset">
+        <legend id="rows-title">Rows</legend>
+      </fieldset>
+      <p>
+        <button type="button" id="row-btn-add">Add row</button>
+        <button type="button" id="row-btn-del">Delete row</button>
+        <button type="button" id="row-btn-img">Add picture</button>
+      </p>
+    </form>
+
+    <!-- Panel to add an image -->
+    <div id='img-container' class="img-container" style="display:none;">
+      <div id="close-img-container" class="cross-to-close"><span>x</span></div>
+      <!-- Display image preview -->
+      <div class="img-preview">
+        <p>No files currently selected for upload.</p>
+      </div>
+      <br>
+      <!-- Controls -->
+      <div class="img-container-controlls">
+        <div class="fakebtn-container">
+          <!-- Define an input element to collect the image (hidden) -->
+          <input type="file" accept="image/*" name="image" id="capture-img"
+          class="transparent" capture="camera" multiple/>
+          <!-- Create a fake button to add style -->
+          <div class="fakebtn">
+            <button>Choose file</button>
+          </div>
+        </div>
+        <!-- Upload button -->
+        <button type="button" id="image-add">Add image</button>
+      </div>
+    </div>
+    
+    <div style="position: absolute; right: 1vw; bottom: 1vh;">
+      <a href="http://geografia.unizar.es/" target="_blank" style="text-align: none;">
+        <img style="width:10vw; max-width:15vw" src="logos/department.svg"></img>
+      </a>
+      <a href="https://iuca.unizar.es/proyecto-analisis-dinamico-de-la-resiliencia-de-los-paisajes-forestales-afectados-por-el-fuego-mediante-indicadores-espectrales-multisensor-paf/" target="_blank" style="text-align: none;">
+        <img style="width:6vw; max-width:9vw; margin-left:20px;" src="logos/paf.svg"></img>
+      </a>
+    </div>
+
+    <script>
+      // Handle SW if "serviceWorker" exist
+      if ("serviceWorker" in navigator) {
+        // Register the app's service worker
+        // Passing the filename where that worker is defined.
+        navigator.serviceWorker.register("sw.js").then(
+          (registration) => {
+            console.log("Service worker registration successful:",
+            registration);
+          },
+          (error) => {
+            console.error(`Service worker registration failed: ${error}`);
+          },
+        );
+      } else {
+        console.error("Service workers are not supported.");
+      }
+    </script>
+  </body>
+</html>

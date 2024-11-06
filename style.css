@@ -1,0 +1,205 @@
+body {
+  margin: 1vh 1vw;
+  background-color: #ffffff;
+  max-height: 100vh;
+}
+h1 {
+  cursor: pointer;
+}
+ul,
+fieldset,
+legend {
+  border: 1px solid;
+  background-color: #ffffff;
+}
+ul {
+  padding: 0;
+  font-family: monospace;
+}
+li,
+legend {
+  list-style-type: none;
+  padding: 0.2em 0.5em;
+  background-color: #ACE1AF;
+}
+li:nth-of-type(even) {
+  background-color: inherit;
+}
+
+/* Saved inventory li style */
+.savedinv {
+  display: flex;
+  justify-content: space-between;
+}
+.savedinv a {
+  margin: 0 5px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Fix height of rows form */
+.rows-fieldset {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+/* Custom row style */
+.inv-row{
+  border-radius: 5px;
+}
+.inv-row input {
+  margin: 5px;
+}
+.inv-row:nth-of-type(even){
+  background-color: #D5D4D4;
+}
+.inv-row:nth-of-type(odd){
+  background-color: #F5F5F5;
+}
+
+/* Define the selected row background color */
+.selected {background-color: #93E7FC !important;}
+
+.autocomplete {
+  /*the container must be positioned relative:*/
+  position: relative;
+  display: inline-block;
+}
+
+.autocomplete-items {
+  position: absolute;
+  border: 1px solid #d4d4d4;
+  border-bottom: none;
+  border-top: none;
+  z-index: 99;
+  /*position the autocomplete items to be the same width as the container:*/
+  top: 100%;
+  left: 0;
+  right: 0;
+}
+
+.autocomplete-items div {
+  padding: 10px;
+  cursor: pointer;
+  background-color: #ffffff;
+  border-bottom: 1px solid #d4d4d4;
+}
+
+.autocomplete-items div:hover {
+  /*when hovering an item:*/
+  background-color: #e9e9e9;
+}
+.autocomplete-active {
+  /*when navigating through the items using the arrow keys:*/
+  background-color: DodgerBlue !important;
+  color: #ffffff;
+}
+
+/* Image panel */
+.img-container {
+  background-color: #d4d4d4;
+  border: 2px solid black;
+  border-radius: 5px;
+  font-size: 1.3em;
+  /* Centering the div */
+  /* height/2 + padding-top + top = 50vh */
+  height: 60vh;
+  padding: 5vh 5vw;
+  top: 15vh;
+  /* width/2 + padding-lef + left = 50vw */
+  width: 86vw;
+  left: 2vw;
+
+  position: absolute;
+  overflow: auto;
+  z-index: 5;
+}
+
+.img-container-controlls {
+  display: flex;
+  justify-content: space-around;
+}
+
+.img-preview {
+  border: 2px dashed grey;
+  border-radius: 5px;
+  margin: auto;
+  padding: 5px;
+}
+
+.img-preview p {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  font-size: 0.8em;
+}
+
+.img-preview img {
+  display: block;
+  height: auto;
+  margin: auto;
+  width: 40vw;
+}
+
+/* Fake button */
+/* Hide an input element (transparent 100%) */
+/* Put then a 'fake' button with custom style */
+/* When the user taps the button first input will be clicked. */
+.fakebtn-container {
+  position: relative;
+}
+
+/* Displayed button (style to show) */
+.fakebtn {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  z-index: 1;
+}
+
+.fakebtn button {
+  padding: 3px 10px;
+  background-color: white;
+  border-radius: 5px;
+  border: none;
+  appearance: none;
+  text-decoration: none;
+  color: black;
+  font-weight: 400;
+}
+
+/* Input file type*/
+.transparent {
+  position: relative;
+  opacity: 0;
+  width: 100%;
+  z-index: 2;
+}
+
+/* Put a div below the add image box to block the app */
+.block-app-div {
+  background-color: #0009;
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+  margin: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+/* Cross to close styling */
+.cross-to-close {
+  position: relative;
+  top: -4%;
+  left: -3%;
+}
+
+.cross-to-close span {
+  color: black;
+  cursor: pointer;
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 1.4em;
+}
