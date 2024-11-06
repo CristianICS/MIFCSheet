@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14045596.svg)](https://doi.org/10.5281/zenodo.14045596)
+
 # MIFCSheet PWA
 
 Application to collect in-situ forest inventories with MIFC approach. URL: [https://mifcsheet.unizar.es](https://mifcsheet.unizar.es/)
