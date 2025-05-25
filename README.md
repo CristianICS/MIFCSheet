@@ -22,6 +22,24 @@ First time the APP is loaded, the Service Worker is started and saved. Then, the
 
 [Uninstalling a PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Installing#uninstalling)
 
+## Customization rules
+
+The inventory metadata and the row collected variables could be modified to take into account any vegetation inventory parameters.
+
+### Inventory metadata
+
+The following guidelines should be observed when modifying HTML input elements to ensure consistency and correctness, particularly in relation to database mapping and user interface behavior:
+
+1. **ID Attribute Convention**: Update the value of the `id` attribute within the `<input>` tag to follow the prefix `inventory-`. This value determines the corresponding column name in the database and must uniquely identify the parameter being referenced. For example, the `id` `inventory-name` will produce a column named `name`.
+
+2. **Label Association**: Ensure that the `for` attribute in the `<label>` tag matches the `id` attribute of its associated `<input>` element. This linkage is essential for accessibility and proper form functionality.
+
+3. **Input Type Specification**: The `type` attribute of the `<input>` tag must correspond to the intended data type. Acceptable values are either `text` for alphanumeric input or `number` for numerical values.
+
+4. **Text Area Usage**: In special cases where user input requires a larger, a `<textarea>` element may be used instead of an `<input>` tag. This allows for extended user input while maintaining semantic clarity.
+
+5. **Attribute Preservation**: All other attributes present in the original tags must remain unchanged to preserve their intended behavior and compatibility.
+
 ## References
 
 ```bibtex
