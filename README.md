@@ -4,6 +4,8 @@
 
 Application to collect in-situ forest inventories with MIFC approach. URL: [https://mifcsheet.unizar.es](https://mifcsheet.unizar.es/)
 
+The parameters collected by the application can be customized to match the user requirements.
+
 ## Key points
 
 - Promises and async/await: The use of Promises and async/await makes the code more readable and easier to follow.
@@ -11,6 +13,7 @@ Application to collect in-situ forest inventories with MIFC approach. URL: [http
 - Class-based Structure: Using a class (e.g., IndexedDBHandler) provides a more modern, modular, and reusable structure. This aligns well with ES6+ JavaScript practices.
 - Improved Readability: The use of methods within a class improves code organization and readability. It separates concerns more clearly and can be extended easily.
 - **Offline-mode**.
+- Inventory parameters easy customization using the JSON dictionaries *inventory_header.js* and *form_columns.js*.
 
 ## Configuration
 
@@ -22,23 +25,32 @@ First time the APP is loaded, the Service Worker is started and saved. Then, the
 
 [Uninstalling a PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Installing#uninstalling)
 
-## Customization rules
+## Customization
 
-The inventory metadata and the row collected variables could be modified to take into account any vegetation inventory parameters.
+Available parameters to include in *inventory_header.js*:
 
-### Inventory metadata
+| Parameter | Description |
+| --------- | ----------- |
+| `custom_name` | Name describing the variable. |
+| `form_type` | Available options are input, select and textarea. HTML form elements where the variables are included. |
+| `input_type` | When `form_type` is input. Available options are text and number. |
+| `required` | If the variable is mandatory. Boolean. |
+| `display_col` | It is the column which will describe the inventory inside the panel containing all the collected inventories. Usually is a variable with a custom name giving more information than the auto-generated ID. |
 
-The following guidelines should be observed when modifying HTML input elements to ensure consistency and correctness, particularly in relation to database mapping and user interface behavior:
+Available parameters to include in *form_columns.js*:
 
-1. **ID Attribute Convention**: Update the value of the `id` attribute within the `<input>` tag to follow the prefix `inventory-`. This value determines the corresponding column name in the database and must uniquely identify the parameter being referenced. For example, the `id` `inventory-name` will produce a column named `name`.
-
-2. **Label Association**: Ensure that the `for` attribute in the `<label>` tag matches the `id` attribute of its associated `<input>` element. This linkage is essential for accessibility and proper form functionality.
-
-3. **Input Type Specification**: The `type` attribute of the `<input>` tag must correspond to the intended data type. Acceptable values are either `text` for alphanumeric input or `number` for numerical values.
-
-4. **Text Area Usage**: In special cases where user input requires a larger, a `<textarea>` element may be used instead of an `<input>` tag. This allows for extended user input while maintaining semantic clarity.
-
-5. **Attribute Preservation**: All other attributes present in the original tags must remain unchanged to preserve their intended behavior and compatibility.
+| Parameter | Description |
+| --------- | ----------- |
+| `description` | Brief text explaining the feature. It will be showed at the bottom of the inventory page automatically.
+| `form_type` | Available options are input and select.
+| `input_type` | When `form_type` is input. Available options are text and number
+| `input_type` | When `form_type` is input. Available options are text and number
+| `number_type` | When `form_type` is input and input_type equals number. Available options are integer and float
+| `values` | When `form_type` is select, this is the field where the user specifies the available options. List of possible values, e.g., [’N’, ’S’].
+| `meanings` | Descriptions for each of the values available, e.g., ['North', 'South'].
+| `autocomplete` | `true` or `false`. Specifies if current field has an autocomplete function. If it does, the `species.js` dictionary must contain entries related with the name of the `form_columns.js` dictionary's key.
+| `autocomplete_code` | `true` or `false`. If there is a column with `autocomplete`, the `autocomplete_code` column displays the code of the value inside autocomplete column.
+| `autocomplete_value` | Inside the `autocomplete_code` column, This parameter defines the column key that stores the values relating to the autocomplete code.
 
 ## References
 
