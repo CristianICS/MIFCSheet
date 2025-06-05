@@ -17,37 +17,56 @@
     <script src="libs/jszip.min.js"></script>
     <script src="libs/jszip-utils.js"></script>
     <!-- Species codes -->
-    <script src="listado_especies.js"></script>
+    <script src="species.js"></script>
+    <!-- Inventory columns -->
+    <script src="form_columns.js"></script>
+    <!-- Inventory header columns -->
+    <script src="inventory_header.js"></script>
   </head>
   <body>
-    <div style="position: absolute; right: 1vw; top: 1vh;">
-      <a href="https://github.com/CristianICS/MIFCSheet" target="_blank">
-        <img style="width:2vw; max-width:5vw" src="logos/github.svg"></img>
-      </a>
-    </div>
     <!-- Block app when an image is going to be inserted -->
     <div id="block-app-div" class="block-app-div" style="display:none;"></div>
     <h1 id="app-title">Forest Inventory</h1>
-    <!-- Inventory add/metadata panel -->
+    <section class="accordion" style="margin-bottom:5vh !important;">
+        <div class="tab">
+            <input type="checkbox" name="accordion-1" id="cb1">
+            <label for="cb1" class="tab__label" style="padding: 0.2rem !important">Guidelines</label>
+            <div class="tab__content">
+                <p>Complete a large tree plot (all trees measured have a dbh > 9 cm) and a small tree plot (all trees measured are under 1.3 m in height). The number of parameters in each row is the same, except for the <code>Crown Class</code>. Whether you are inside the large or small plot depends on the value of the <code>plot_type</code> parameter.</p>
+                <p><strong>Step 1:</strong> Establish a 11.28-m radius (22.56-m diameter) circular ground plot. Record the center location of your plot using your GNSS. Include the point ID inside the <code>Central point plot ID</code> parameter. Feel free to also walk the approximate perimeter or mark the locations of your flags.  Using tape measures, a compass (digital or manual), and flagging pins, mark N-S and E-W transects through your ground plot. Divide your plot into four quadrants, e.g. NE, SE, SW, NW. Use flags or flagging tape as needed. </p>
+                <p><strong>Step 2:</strong> Conduct a Large Tree Plot survey. <strong>Record trees with diameter over 9 cm</strong> in the 11.28 m-radius circle plot</p>
+                <p><strong>Step 3:</strong> Conduct a nested 3.99-m radius (7.98 m diameter) Small Tree Plot nested at the center of your Large Tree Plot. <strong>Record all trees with a height of less than 1.3 m tall</strong>. Consider shrubs as a small tree if they have a central stem at 1.3 m height.</p>
+            </div>
+        </div>
+    </section>
+        <!-- Inventory add/metadata panel -->
     <form id="inventory-form">
-      <fieldset>
+      <fieldset style="display: flex; flex-direction: column;">
         <legend id="app-main-form-title">Init new inventory</legend>
-        <p>
-          <label for="inventory-name">Name</label>
+        <!-- <p>
+          <label for="inventory-name">Inventory name</label>
           <input type="text" id="inventory-name" class="inv-mtd" required />
-          <label for="inventory-creator">Creator</label>
-          <input type="text" id="inventory-creator" class="inv-mtd" />
         </p>
         <p>
-          <label for="inventory_init_point">Initial point</label>
-          <input type="text" id="inventory-init_point" class="inv-mtd" />
-          <label for="inventory-stop_point">Final point</label>
-          <input type="text" id="inventory-stop_point" class="inv-mtd" />
+          <label for="inventory-central_point">Central point plot ID</label>
+          <input type="text" id="inventory-central_point" class="inv-mtd" />
+        </p>
+        <p>
+          <label for="inventory-crew_1">Crew member 1</label>
+          <input type="text" id="inventory-crew_1" class="inv-mtd" />
+        </p>
+        <p>
+          <label for="inventory-crew_2">Crew member 2</label>
+          <input type="text" id="inventory-crew_2" class="inv-mtd" />
+        </p>
+        <p>
+          <label for="inventory-crew_3">Crew member 3</label>
+          <input type="text" id="inventory-crew_3" class="inv-mtd" />
         </p>
         <p>
           <label for="inventory-comments">Comments</label>
           <textarea id="inventory-comments" class="inv-mtd"></textarea> 
-        </p>
+        </p> -->
       </fieldset>
       <p>
         <button type="submit" id="app-main-form-btn">Create inventory</button>
@@ -57,7 +76,9 @@
     <section id="inventory-sheet"></section>
     <form id="rows-form" style="display:none;" autocomplete="off">
       <fieldset id="rows-fieldset" class="rows-fieldset">
-        <legend id="rows-title">Rows</legend>
+        <legend id="rows-title">
+            Rows <span id="rows-number"></span>
+        </legend>
       </fieldset>
       <p>
         <button type="button" id="row-btn-add">Add row</button>
@@ -82,20 +103,29 @@
           class="transparent" capture="camera" multiple/>
           <!-- Create a fake button to add style -->
           <div class="fakebtn">
-            <button>Choose file</button>
+            <button>Choose/Take picture</button>
           </div>
         </div>
         <!-- Upload button -->
-        <button type="button" id="image-add">Add image</button>
+        <button type="button" id="image-add">Insert image</button>
       </div>
     </div>
     
-    <div style="position: absolute; right: 1vw; bottom: 1vh;">
+    <!-- Panel with the tooltips -->
+    <div class="tooltip-panel">
+        <h2>Inventory's predefined parameters</h2>
+        <section class="accordion" id="tooltip-panel"></section>
+    </div>
+
+    <div class="copyright-box">
       <a href="http://geografia.unizar.es/" target="_blank" style="text-align: none;">
-        <img style="width:10vw; max-width:15vw" src="logos/department.svg"></img>
+        <img style="width:20vw; max-width:20vw" src="logos/department.svg"></img>
       </a>
       <a href="https://iuca.unizar.es/proyecto-analisis-dinamico-de-la-resiliencia-de-los-paisajes-forestales-afectados-por-el-fuego-mediante-indicadores-espectrales-multisensor-paf/" target="_blank" style="text-align: none;">
-        <img style="width:6vw; max-width:9vw; margin-left:20px;" src="logos/paf.svg"></img>
+        <img style="width:9vw; max-width:9vw;" src="logos/paf.svg"></img>
+      </a>
+      <a href="https://github.com/CristianICS/MIFCSheet" target="_blank">
+        <img style="width:4vw; max-width:5vw" src="logos/github.svg"></img>
       </a>
     </div>
 
