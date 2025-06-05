@@ -272,25 +272,26 @@ class IndexedDBHandler {
 
 class Inventory {
   /** Represent an inventory with its metadata */
-  constructor(name, creator, init_point, stop_point, comments, id = false) {
+  constructor(metadata, id = false) {
+    // Extract inventory header col keys
+    let inv_metadata_keys = Object.keys(inv_header);
+    // Try to return the metadata file (if any)
+    inv_metadata_keys.forEach((key) => {
+        let data = metadata[key];
+        if (data) {
+            this[key] = data;
+        }
+    })
     this.id = id;
-    this.name = name;
-    this.creator = creator;
-    this.init_point = init_point;
-    this.stop_point = stop_point;
-    this.comments = comments;
     this.created_at = getTime();
   }
 
   /** Transform current object into an array to store it inside the IDB. */
   parseIdb() {
-    let idbArray = {
-      'name': this.name,
-      'creator': this.creator,
-      'init_point': this.init_point,
-      'stop_point': this.stop_point,
-      'comments': this.comments
-    }
+    let idbArray = {};
+    Object.keys(inv_header).forEach((key) => {
+        idbArray[key] = this[key]
+    })
     if (this.id){
       idbArray['id'] = this.id;
     } else {
@@ -311,7 +312,12 @@ class Inventory {
   toHtml(){
     // Init li element
     const invEl = document.createElement("li");
-    invEl.textContent = `Inventory ${this.name}`;
+    // Grab the name of the column defined for this
+    let name_col = Object.keys(inv_header).filter((k) => {
+        return Object.keys(inv_header[k]).includes('display_col');
+    })
+ 
+    invEl.textContent = `Inventory ${this[name_col]}`;
     // Update style
     invEl.classList.add('savedinv');
     // Store the inv id
@@ -391,6 +397,7 @@ class Inventories {
     idbInventories.forEach((inv) => {
       // Create a new Inventory with its stored info
       const inventory = this.initInv(inv, inv.id);
+
       // Update past inventories and store them inside current class
       this.metadata.push(inventory);
     });
@@ -408,14 +415,7 @@ class Inventories {
    */
   initInv(metadata, id = false) {
     try {
-      return new Inventory(
-        metadata.name,
-        metadata.creator,
-        metadata.init_point,
-        metadata.stop_point,
-        metadata.comments,
-        id
-      );
+      return new Inventory(metadata, id);
     } catch (error) {
       console.log(`[Inventories.storeInv error]${error}`);
     }
@@ -464,6 +464,7 @@ class Inventories {
    * @param {IndexedDBHandler} dbHandler 
    */
   async save(metadata, dbHandler) {
+
     // Handle inputs form elements with the inventory metadata
     var metadataDict = {};
     metadata.forEach((inp) => {
@@ -472,8 +473,9 @@ class Inventories {
       let value = inp.value;
       metadataDict[key] = value;
     });
-    let inventory = this.initInv(metadataDict);
 
+    let inventory = this.initInv(metadataDict);
+ 
     // Check if there is a stored inventory with the same name + diffrnt. props
     let duplicatedInv = this.selectByName(inventory.name);
 
@@ -523,7 +525,7 @@ class Inventories {
    */
   checkProperties(newinv, current){
     // Properties to check
-    let props = ['name', 'creator', 'init_point', 'stop_point', 'comments'];
+    let props = Object.keys(inv_header);
     let isequal = props.reduce((prev, key) => {
       return (newinv[key] == current[key]) * prev;
     }, 1)
@@ -549,6 +551,38 @@ class Inventories {
     // Remove deleted inventory from Inventories.metadata
     this.metadata = this.metadata.filter((mtd) => {return mtd.id != id});
   }
+}
+
+var init_inventory_panel = function() {
+    // Get the container where inventory rows are
+    let container = document.querySelector("#inventory-form fieldset");
+    Object.keys(inv_header).forEach((key) => {
+        let props = inv_header[key];
+        // Define the input id for the current key
+        let key_id = `inventory-${key}`;
+        // Container with info label and input
+        let p = document.createElement('p');
+
+        // Create the label
+        let lbl = document.createElement('label');
+        lbl.setAttribute('for', key_id);
+        lbl.innerText = props['custom_name'];
+        p.appendChild(lbl)
+        // Define input
+        let inp = document.createElement(props['form_type']);
+        inp.id = key_id;
+        inp.classList.add("inv-mtd");
+        if (Object.keys(props).includes("required")) {
+            inp.setAttribute("required", true)
+        }
+        if (props['form_type'] == 'input') {
+            inp.setAttribute('type', props['input_type']);
+        }
+        p.appendChild(inp);
+
+        // Add the inventory header row to the HTML container
+        container.appendChild(p);
+    })
 }
 
 class Rows {
@@ -577,8 +611,9 @@ class Rows {
   show() {
     this.arrays.forEach((row) => {row.display()});
     // Show the number of rows in the legend name
-    let nrows = `Rows (${this.arrays.length})`;
-    document.getElementById('rows-title').textContent = nrows;
+    // let nrows = `Rows (${this.arrays.length})`;
+    let nrows = `(${this.arrays.length})`;
+    document.getElementById('rows-number').textContent = nrows;
   }
 
   /**
@@ -595,23 +630,45 @@ class Rows {
     let rowsPNodeList = document.querySelectorAll(selectClass);
     // Sort by rowid
     // Handle rows
-    rowsPNodeList.forEach((p) => {
+    rowsPNodeList.forEach((r) => {
       // Get row id
-      let id = !p.dataset.id ? false : parseInt(p.dataset.id);
+      let id = !r.dataset.id ? false : parseInt(r.dataset.id);
       // Get current row number
-      let rown = selected ? parseInt(p.id.split('-')[1]) : false;
+      let rown = selected ? parseInt(r.id.split('-')[1]) : false;
       // Get values from inputs inside p element
-      // Note: Frist select the id of the row to look for all inputs elements,
-      // including the #especie inside the div .autocomplete
-      let inputsNodeList = document.querySelectorAll(`#${p.id} input`);
+      // Note: First select the id of the row to look for all inputs elements
+      let inputsNodeList = document.querySelectorAll(`#${r.id} input`);
       // Store each input key:val inside an object
       let inputsDict = {};
       inputsNodeList.forEach((input) => {
         // Get inputProperty
         let key = input.id.split('-')[0];
         let val = input.value;
-        // Transform all but species into numeric values
-        inputsDict[key] = key == 'especie' | key == 'comment' ? val : parseInt(val);
+        // Transform the numeric values
+        if (Object.keys(inv_columns[key]).includes('number_type')){
+            if (inv_columns[key]['number_type'] == 'integer') {
+                inputsDict[key] = parseInt(val);
+            } else if (inv_columns[key]['number_type'] == 'float') {
+                inputsDict[key] = parseFloat(val);
+            }
+        } else {
+            // Remain text format
+            inputsDict[key] = val
+        }
+      });
+
+      // Obtain the select tag elements too
+      let selectNodeList = document.querySelectorAll(`#${r.id} select`);
+      selectNodeList.forEach((select) => {
+        // Get input Property
+        let key = select.id.split('-')[0];
+        let val = select.value;
+        // When the user has not selected a value, the key == val
+        if (key == val){
+            inputsDict[key] = "";
+        } else {
+            inputsDict[key] = val;
+        }
       });
 
       // Create new row element
@@ -627,7 +684,7 @@ class Rows {
 
   /** Remove all the rows inside the form */
   ls() {
-    let rows = document.querySelectorAll("#rows-fieldset p");
+    let rows = document.querySelectorAll("#rows-fieldset div");
     rows.forEach((row) => {row.remove()});
   }
 
@@ -681,11 +738,10 @@ class Row {
     // length of the currently existing rows.
     this.rown = rown ? rown : rows.length + 1;
     this.created_at = getTime();
-    // Database columns
-    this.cols = [
-      'especie', 'n', 'd', 'di', 'dd', 'h',
-      'dmay', 'dmen', 'rmay', 'rmen', 'dbh', 'comment'
-    ];
+    // Database columns. The row names of 'genus' and 'n' are defined in
+    // other parts of the classes.js, but the rest of the row parameters can
+    // be added or removed.
+    this.cols = Object.keys(inv_columns);
     if (id) {
       this.id = id;
     }
@@ -706,7 +762,7 @@ class Row {
    */
   toHtml(){
     // Create UI element which contains the row columns
-    let newr = document.createElement('p');
+    let newr = document.createElement('div');
     // Add the row's position in the row list
     newr.id = `rown-${this.rown}`;
     // Add style
@@ -716,48 +772,99 @@ class Row {
 
     // Define the inputs (columns) inside the row
     this.cols.forEach((key, index) => {
-      // Handle text type
-      let inpType = key == 'especie' | key == 'comment' ? 'text' : 'number';
-      // Define input id by appending the row number
       let inpId = key + '-' + this.rown;
-      // Create input element in HTML format
-      let inp = document.createElement('input');
-      // Add elements based on row properties
-      inp.type = inpType;
-      inp.id = inpId;
-      inp.name = key;
-      if (this.hasOwnProperty(key)) {inp.value = this[key];}
-      // Set tabindex taking into account the number of rows, i.e.,
-      // Actual row = 3, Current input (index+1) = 1, number of props = 11
-      // Tabindex = (ninputs * nrow) + (index + 1) = 34
-      inp.setAttribute('tabindex', index+1+(this.rown * this.cols.length));
-      // Create placeholder
-      inp.setAttribute('placeholder', key);
-      // Add class to retrieve inputs later
-      inp.classList.add('row-input');
+      var inp;
+      // Create the sub-container with label-input pair
+      var var_div = document.createElement('div');
+      var_div.classList.add("input-group");
 
-      // Insert the input inside a div to handle autocomplete
-      if (key == 'especie') {
-        // Get all the species name as an Array
-        let species = listado_especies.map((i) => {return i.especie});
-        autocomplete(inp, species, this.rown);
+      // Get current column metadata values
+      let col_meta = inv_columns[key];
+      
+      // Create the label
+      var inp_lbl = document.createElement('label');
+      inp_lbl.setAttribute("for", inpId);
+      inp_lbl.innerText = col_meta['custom_name'];
+      var_div.appendChild(inp_lbl);
+
+      // Cast the available options for each column type
+      if (col_meta['form_type'] == 'select') {
+
+        // Create the input element
+        inp = document.createElement('select');
+        inp.id = inpId;
+        inp.name = key;
+        // Construct the available options
+        let options = col_meta['values'];
+        let options_objs = options.map((opt) => {
+            let opt_object = document.createElement('option');
+            opt_object.setAttribute('value', opt);
+            opt_object.innerHTML = `${opt}`;
+            // When there is a prior selected option, show it
+            if (this.hasOwnProperty(key)) {
+                if (this[key] == opt) {
+                    opt_object.setAttribute('selected', true)
+                }
+            }
+            return opt_object;
+        });
+
+        // Include options inside the input element
+        options_objs.map((opt) => {inp.appendChild(opt)});
+
+      } else if (col_meta['form_type'] == 'input') {
+          // Define input id by appending the row number
+          // Create input element in HTML format
+          inp = document.createElement('input');
+          // Add elements based on row properties
+          inp.type = col_meta['input_type'];
+          inp.id = inpId;
+          inp.name = key;
+          // Populate the element with the saved data (if exists)
+          if (this.hasOwnProperty(key)) {inp.value = this[key];}
+          // Set tabindex taking into account the number of rows, i.e.,
+          // Actual row = 3, Current input (index+1) = 1, number of props = 11
+          // Tabindex = (ninputs * nrow) + (index + 1) = 34
+          inp.setAttribute('tabindex', index+1+(this.rown * this.cols.length));
+          // Create placeholder
+          inp.setAttribute('placeholder', key);
+          // Add class to retrieve inputs later
+          inp.classList.add('row-input');
+      }
+
+      // Insert the autocomplete columns inside a div to handle autocomplete
+      if (Object.keys(col_meta).includes('autocomplete')) {
+        // Select only the desired elements inside the autocomplete
+        let meta_filtered = species_metadata.filter(item => item.type === key);
+        // Get all the names as an Array
+        let names = meta_filtered.map((i) => {return i.name});
+        autocomplete(inp, names, this.rown);
         let divAuto = document.createElement('div');
         divAuto.classList.add('autocomplete');
         divAuto.appendChild(inp);
-        newr.appendChild(divAuto);
-      } else if (key == 'n') {
+        var_div.appendChild(divAuto);
+        newr.appendChild(var_div);
+      } else if (Object.keys(col_meta).includes('autocomplete_code')) {
+        // Add a function to catch the name from its code
+        // First, link the input with the column which contains the names
+        inp.setAttribute('data-name-column', col_meta['autocomplete_value']);
+        // Every time the value of the code in the column changes,
+        // try to detect its code from the JSON
         inp.addEventListener('change', (el) => {
-          // Add a function to catch the species name from its code
-          let spCode = el.target.value;
-          let spName = listado_especies
-          .filter((sp) => {return sp.N == spCode})[0].especie;
-          // Get the row number to select the "especie" input
+          let code = el.target.value;
+          let column_name = el.target.dataset.nameColumn;
+          let name = species_metadata.filter((sp) => {
+            return sp.code == code & sp.type == column_name
+        })[0].name;
+          // Get the row number to select the "genus" input
           let rowN = el.target.id.split('-')[1];
-          document.querySelector(`#especie-${rowN}`).value = spName;
+          document.querySelector(`#${column_name}-${rowN}`).value = name;
         });
-        newr.appendChild(inp);
+        var_div.appendChild(inp);
+        newr.appendChild(var_div);
       } else {
-        newr.appendChild(inp);
+        var_div.appendChild(inp);
+        newr.appendChild(var_div);
       }
     });
     return(newr);
@@ -1060,11 +1167,11 @@ class Images {
 }
 
 /**
- * Set autocomplete function in all the especie inputs
+ * Set autocomplete function in all the genus inputs
  * 
  * @param {HTMLInputElement} inp Text input element
  * @param {Array} arr Array of possible autocompleted values
- * @param {Number} rown Row number to select the input with the species code and fill in.
+ * @param {Number} rown Row number to select the input with the genus code and fill in.
  */
 function autocomplete(inp, arr, rown) {
   var currentFocus;
@@ -1101,10 +1208,21 @@ function autocomplete(inp, arr, rown) {
           // close the list of autocompleted values,
           // (or any other open lists of autocompleted values
           closeAllLists();
-          // Get the code of the species
-          let espCode = listado_especies
-          .filter((esp) => {return esp.especie == inp.value})[0].N;
-          document.querySelector(`#n-${rown}`).value = espCode;
+
+          // Select column name where the value comes from
+          let column_name = inp.name;
+
+          if (inv_columns[column_name].autocomplete_code) {
+            // Save the column name where the code is included
+            let target_col = inv_columns[column_name]['autocomplete_code_column'];
+            // Get the code of the item selected with autocomplete
+            let code = species_metadata
+            .filter((i) => {
+              return i.name == inp.value & i.type == column_name})[0].code;
+            
+            document.querySelector(`#${target_col}-${rown}`).value = code;
+          }
+
         });
         a.appendChild(b);
       }
