@@ -1,5 +1,7 @@
 // Init global inventories class
 var inventories = new Inventories();
+// Create the inventories panel
+init_inventory_panel();
 // Init images object
 var images = new Images();
 // Init Database
@@ -19,6 +21,7 @@ newInvFormEl.addEventListener("submit", async (event) => {
 
   // Save inventory metadata inside IDB
   let metadata = document.querySelectorAll('.inv-mtd');
+
   await inventories.save(metadata, dbHandler);
   await inventories.load(dbHandler);
   
@@ -197,3 +200,83 @@ addImg.addEventListener('click', (_) => {
     alert('Select only one row and try again.');
   }
 });
+
+// Generate tooltip panel
+function create_tooltip_panel() {
+    let accordion_panel = document.querySelector('#tooltip-panel');
+    // Get the properties
+    let columns = Object.keys(inv_columns);
+    columns.forEach((key) => {
+        // Create the container
+        let container = document.createElement('div');
+        container.classList.add('tab');
+        // Input element: mandatory. It will collapse/open the content
+        let input_el = document.createElement('input');
+        input_el.setAttribute('type', 'checkbox');
+        input_el.setAttribute('name', `accordion-${key}`);
+        input_el.id = key;
+        container.appendChild(input_el);
+        // Create label (text that will display column name)
+        let label_el = document.createElement('label');
+        label_el.setAttribute('for', key);
+        label_el.classList.add('tab__label');
+        label_el.innerText = inv_columns[key]['custom_name'];
+        container.appendChild(label_el);
+
+        // Create the explanation content
+        let exp_div = document.createElement('div');
+        exp_div.classList.add('tab__content');
+        // Description
+        let p_descript = document.createElement('p');
+        let descript_text = inv_columns[key]['description'];
+        p_descript.innerHTML = `<strong>Description:</strong> ${descript_text}`;
+        exp_div.appendChild(p_descript);
+
+        // Table with the predefined parameters accepted by the column
+        // (only if it's a select element)
+        if (inv_columns[key]['form_type'] == 'select') {
+            let table_div = document.createElement('div');
+            table_div.classList.add('table-container');
+            let table_el = document.createElement('table');
+            // Define header columns
+            let header = document.createElement('tr');
+            let key_col = document.createElement('th');
+            key_col.innerText = 'Key';
+            header.appendChild(key_col);
+            let descript_col = document.createElement('th');
+            descript_col.innerText = 'Meaning';
+            header.appendChild(descript_col);
+            // Append header to the main table
+            table_el.appendChild(header)
+    
+            // Define table rows
+            inv_columns[key]['values'].forEach((value, i) => {
+                // Create new row
+                let tr_el = document.createElement('tr');
+                // Set the name of the key
+                let col_1 = document.createElement('td');
+                col_1.innerText = value;
+                tr_el.appendChild(col_1);
+                // Write its descriptor text
+                let col_2 = document.createElement('td');
+                col_2.innerText = inv_columns[key]['meanings'][i];
+                tr_el.appendChild(col_2);
+    
+                // Append the row to the main table
+                table_el.appendChild(tr_el);
+            });
+    
+            // Append table to its parent container
+            table_div.appendChild(table_el);
+            // Append the table to its parent container
+            exp_div.appendChild(table_div);
+        }
+        // Add exp_div to the main tab inside the accordion menu
+        container.appendChild(exp_div);
+
+        // Include the container as a new label of accordion menu
+        accordion_panel.appendChild(container);
+    })
+
+}
+create_tooltip_panel()
