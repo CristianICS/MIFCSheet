@@ -1,7 +1,7 @@
 body {
   margin: 1vh 1vw;
   background-color: #ffffff;
-  max-height: 100vh;
+  /* max-height: 100vh; */
 }
 h1 {
   cursor: pointer;
@@ -26,6 +26,13 @@ li:nth-of-type(even) {
   background-color: inherit;
 }
 
+/* Adjust labels and input in header form */
+#inventory-form fieldset p {
+    display: flex;
+    flex-direction: column;
+    margin: 3px;
+}
+
 /* Saved inventory li style */
 .savedinv {
   display: flex;
@@ -46,15 +53,29 @@ li:nth-of-type(even) {
 /* Custom row style */
 .inv-row{
   border-radius: 5px;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 10px;
 }
 .inv-row input {
-  margin: 5px;
+  margin: 2px;
+}
+.inv-row select {
+  margin: 2px;
 }
 .inv-row:nth-of-type(even){
   background-color: #D5D4D4;
 }
 .inv-row:nth-of-type(odd){
   background-color: #F5F5F5;
+}
+/* Place the label up to the input el */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0; /* allows the inputs to grow and shrink evenly */
+  min-width: 150px; /* optional minimum width */
 }
 
 /* Define the selected row background color */
@@ -202,4 +223,123 @@ li:nth-of-type(even) {
   font-family: monospace;
   font-weight: bold;
   font-size: 1.4em;
+}
+
+/* Bottom container with logos */
+.copyright-box {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  margin: 10vh auto;
+}
+
+/* Info tooltip button next to the rows fieldset */
+.tooltip {
+    font-family: monospace;
+    background-color: black;
+    border-radius: 50%;
+    padding: 0.3vh 0.9vw;
+    color: white;
+    margin-left: 1vw;
+}
+
+/* Tooltip menu core functionalities */
+/* Raul Barrera https://codepen.io/raubaca/pen/PZzpVe */
+.tab {
+  position: relative;
+}
+.tab input {
+  position: absolute;
+  opacity: 0;
+  z-index: -1;
+}
+.tab__content {
+  max-height: 0;
+  overflow: scroll;
+  transition: all 0.35s;
+}
+.tab input:checked ~ .tab__content {
+  max-height: 10rem;
+}
+
+/* Visual styles */
+.accordion {
+  color: #2b2d42;
+  border: 2px solid;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+.tab__label,
+.tab__close {
+  display: flex;
+  color: white;
+  background: #2b2d42;
+  cursor: pointer;
+}
+.tab__label {
+  justify-content: space-between;
+  padding: 0.5rem;
+}
+.tab__label::after {
+  content: "\276F";
+  width: 1em;
+  height: 1em;
+  text-align: center;
+  transform: rotate(90deg);
+  transition: all 0.35s;
+}
+.tab input:checked + .tab__label::after {
+  transform: rotate(270deg);
+}
+.tab__content p {
+  margin: 0;
+  padding: 1rem;
+}
+.tab__close {
+  justify-content: flex-end;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+}
+
+/* Arrow animation */
+.tab input:not(:checked) + .tab__label:hover::after {
+  animation: bounce .5s infinite;
+}
+@keyframes bounce {
+  25% {
+    transform: rotate(90deg) translate(.25rem);
+  }
+  75% {
+    transform: rotate(90deg) translate(-.25rem);
+  }
+}
+
+/* Tooltip tables style */
+/* Rizky https://codepen.io/rzkytmgr/pen/oNXVGoP */
+.table-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 30vh;
+}
+
+table {
+  border-collapse: collapse;
+  background-color: white;
+  overflow: hidden;
+  width: 500px;
+  border-radius: 10px;
+}
+
+th, td {
+  font-family:'Motnserrat',sans-serif;
+  text-align: left;
+  font-size: 12px;
+  padding: 10px;
+}
+
+th {
+  background-color: #5f638b;
+  color: white;
 }
