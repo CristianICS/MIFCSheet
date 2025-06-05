@@ -51,39 +51,3 @@ Available parameters to include in *form_columns.js*:
 | `autocomplete` | `true` or `false`. Specifies if current field has an autocomplete function. If it does, the `species.js` dictionary must contain entries related with the name of the `form_columns.js` dictionary's key.
 | `autocomplete_code` | `true` or `false`. If there is a column with `autocomplete`, the `autocomplete_code` column displays the code of the value inside autocomplete column.
 | `autocomplete_value` | Inside the `autocomplete_code` column, This parameter defines the column key that stores the values relating to the autocomplete code.
-
-## References
-
-```bibtex
-@article{camaraartigasMuestreoTransectoFormaciones2013,
-  title = {Muestreo En Transecto de Formaciones Vegetales de Faner{\'o}fitos y Cam{\'e}fitos ({{I}}): Fundamentos Metodol{\'o}gicos},
-  shorttitle = {Muestreo En Transecto de Formaciones Vegetales de Faner{\'o}fitos y Cam{\'e}fitos ({{I}})},
-  author = {C{\'a}mara Artigas, Rafael and D{\'i}az Del Olmo, Fernando},
-  year = {2013},
-  month = jun,
-  journal = {Estudios Geogr{\'a}ficos},
-  volume = {74},
-  number = {274},
-  pages = {67--88},
-  issn = {1988-8546, 0014-1496},
-  doi = {10.3989/estgeogr.201303},
-  urldate = {2024-10-07},
-  file = {C:\Zotero\storage\8THRKWQD\Cámara Artigas and Díaz Del Olmo - 2013 - Muestreo en transecto de formaciones vegetales de fanerófitos y caméfitos (I) fundamentos metodológ.pdf}
-}
-
-@article{camaraartigasMuestreoTransectoFormaciones2013a,
-  title = {Muestreo En Transecto de Formaciones Vegetales de Faner{\'o}fitos y Cam{\'e}fitos ({{MIFC}}) ({{II}}): Estudio de Los Sabinares de La {{Reserva Biol{\'o}gica}} de {{Do{\~n}ana}} ({{RBD}}) ({{Espa{\~n}a}})},
-  shorttitle = {Muestreo En Transecto de Formaciones Vegetales de Faner{\'o}fitos y Cam{\'e}fitos ({{MIFC}}) ({{II}})},
-  author = {C{\'a}mara Artigas, Rafael and D{\'i}az Del Olmo, Fernando and Borja Barrera, C{\'e}sar},
-  year = {2013},
-  month = jun,
-  journal = {Estudios Geogr{\'a}ficos},
-  volume = {74},
-  number = {274},
-  pages = {89--114},
-  issn = {1988-8546, 0014-1496},
-  doi = {10.3989/estgeogr.201304},
-  urldate = {2024-10-07},
-  file = {C:\Zotero\storage\Q2TQK327\Cámara Artigas et al. - 2013 - Muestreo en transecto de formaciones vegetales de fanerófitos y caméfitos (MIFC) (II) estudio de lo.pdf}
-}
-```
