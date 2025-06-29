@@ -6,21 +6,17 @@ var inv_header = {
         'required': true,
         'display_col': true
     },
-    "central_point_id": {
-        'custom_name': "Central point ID",
+    "init_point_id": {
+        'custom_name': "Initial point ID",
         'form_type': 'input',
         'input_type': 'number',
         'number_type': 'integer'
     },
-    "crew_1": {
-        'custom_name': "Crew member 1",
+    "final_point_id": {
+        'custom_name': "Final point ID",
         'form_type': 'input',
-        'input_type': 'text'
-    },
-    "crew_2": {
-        'custom_name': "Crew member 2",
-        'form_type': 'input',
-        'input_type': 'text'
+        'input_type': 'number',
+        'number_type': 'integer'
     },
     'comment': {
         'custom_name': "Comments",

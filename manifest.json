@@ -1,6 +1,6 @@
 {
   "name": "ForestInventory",
-  "short_name": "FIPaF",
+  "short_name": "FI",
   "description": "Web based and Progressive Web Application to store local forest inventories.",
   "start_url": "/",
   "display": "standalone",

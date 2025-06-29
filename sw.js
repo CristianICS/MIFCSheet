@@ -15,11 +15,12 @@ const APP_STATIC_RESOURCES = [
   "/species.js",
   "/style.css",
   "/sw.js",
-  "/libs",
   "/libs/FileSaver.min.js",
   "/libs/jszip-utils.js",
   "/libs/jszip.min.js",
-  "/logos",
+// These two folders generate an error in Chrome
+//   "/libs",
+//   "/logos",
   "/logos/paf.svg",
   "/logos/department.svg",
   "/logos/github.svg"
