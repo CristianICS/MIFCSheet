@@ -1,0 +1,58 @@
+code,name,type,Commonly_known
+1,Acer,genus,Maples
+2,Betula,genus,Birches
+3,Populus,genus,Poplars
+4,Quercus,genus,Oaks
+5,Pinus,genus,Pines
+6,Picea,genus,Spruces
+7,Abies,genus,Firs
+8,Thuja,genus,Cedars
+9,Picea mariana,species,Black spruce
+10,Larix laricina,species,Tamarack
+11,Acer rubrum,species,Red maple
+12,Acer saccharinum,species,Silver maple
+13,Betula papyifera,species,White birch
+14,Salix,species,Willow
+15,Salix,species,Willow
+16,Vaccinium,species,Blueberry
+17,Rhododendron groenlandicum,species,Labrador tea
+18,Bog,species,Bog
+19,Kalmia polifolio,species,Laurel
+20,Rumohra,species,Leather leaf
+21,Pinus sylvestris L.,species,Pino silvestre
+22,Prunus spinosa L.,species,Endrino
+23,Buxus sempervirens L.,species,Boj
+24,Juniperus oxycedrus L.,species,Enebro
+25,Pinus halepensis Mill.,species,Pino carrasco
+26,Quercus coccifera L.,species,Coscoja
+27,Genista scorpius (L.) DC. in Lam. & DC.,species,Aliaga
+28,Rubia peregrina L.,species,Rubia peregrina
+29,Arctostaphylos uva-ursi,species,Gayuba
+30,Dorycnium pentaphyllum,species,Bocha
+31,Rosmarinus officinalis,species,Romero
+32,Teucrium gnaphalodes,species,Zamarrila lanuda
+33,Ruscus aculeatus L.,species,Rusco
+34,Thymus vulgaris L.,species,Tomillo
+35,Phillyrea angustifolia L.,species,Olibeta
+36,Rhamnus alaternus L.,species,Abitierno
+37,Staehelina dubia L.,species,Hierba pincel 
+38,Aphyllanthes monspeliensis,species,Junquillo
+39,Asparagus acutifolius,species,Esparraguera
+40,Salvia lavandulifolia,species,Salvia
+41,Euphorbia nicaeensis,species,Letrera
+42,Bupleurum fruticescens L.,species,
+43,Globularia SP,species,Globularia
+44,Amelanchier ovalis,species,Guillomo
+45,Genista hispanica L.,species,Aliaga
+46,Lavandula stoechas pedunculata L.,species,Lavandula
+47,Genista teretifolia,species,Genista Fitisus
+48,Crataegus monogyna,species,Majuelo
+49,Orquidea SP,species,Orquidea
+50,Eryngium campestre L,species,Cardo
+51,Fumana ericoides,species,Hierba sillera
+52,Sedum SP,species,Sederitis
+53,Lonicera pyrenaica L.,species,Madreselva del Pirineo
+54,Juniperus phoenicea L.,species,Sabina
+55,Quercus ilex L.,species,Encina
+56,Echinospartum horridum (Vahl) Rothm.,species," ""Cojin de monja"""
+57,Juniperus communis L.,species,Enebro
