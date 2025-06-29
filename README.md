@@ -51,3 +51,10 @@ Available parameters to include in *form_columns.js*:
 | `autocomplete` | `true` or `false`. Specifies if current field has an autocomplete function. If it does, the `species.js` dictionary must contain entries related with the name of the `form_columns.js` dictionary's key.
 | `autocomplete_code` | `true` or `false`. If there is a column with `autocomplete`, the `autocomplete_code` column displays the code of the value inside autocomplete column.
 | `autocomplete_value` | Inside the `autocomplete_code` column, This parameter defines the column key that stores the values relating to the autocomplete code.
+
+## How to use
+
+1. Copy all the files to your own server.
+2. Modify the `inventory_header.js` and `form_columns.js` files in order to adapt the inventory form to your needs.
+3. Access the application through a modern web browser.
+4. Optional: [Convert it into a PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Installing).
