@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Forest Inventory</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
+    <!-- Custom classes with object and functions -->
+    <script src="classes.js"></script>
+    <!-- Event handlers and app functionality -->
+    <script src="app.js" defer></script>
+    <!-- Predefined classes for downloading proccess -->
+    <!-- FileSaver for saveAs function -->
+    <script src="libs/FileSaver.min.js"></script> 
+    <script src="libs/jszip.min.js"></script>
+    <script src="libs/jszip-utils.js"></script>
+    <!-- Species codes -->
+    <script src="species.js"></script>
+    <!-- Inventory columns -->
+    <script src="form_columns.js"></script>
+    <!-- Inventory header columns -->
+    <script src="inventory_header.js"></script>
+  </head>
+  <body>
+    <!-- Block app when an image is going to be inserted -->
+    <div id="block-app-div" class="block-app-div" style="display:none;"></div>
+    <h1 id="app-title">Forest Inventory</h1>
+    <section class="accordion" style="margin-bottom:5vh !important;">
+        <div class="tab">
+            <input type="checkbox" name="accordion-1" id="cb1">
+            <label for="cb1" class="tab__label" style="padding: 0.2rem !important">Guidelines</label>
+            <div class="tab__content">
+                <p>Complete a large tree plot (all trees measured have a dbh > 9 cm) and a small tree plot (all trees measured are under 1.3 m in height). The number of parameters in each row is the same, except for the <code>Crown Class</code>. Whether you are inside the large or small plot depends on the value of the <code>plot_type</code> parameter.</p>
+                <p><strong>Step 1:</strong> Establish a 11.28-m radius (22.56-m diameter) circular ground plot. Record the center location of your plot using your GNSS. Include the point ID inside the <code>Central point plot ID</code> parameter. Feel free to also walk the approximate perimeter or mark the locations of your flags.  Using tape measures, a compass (digital or manual), and flagging pins, mark N-S and E-W transects through your ground plot. Divide your plot into four quadrants, e.g. NE, SE, SW, NW. Use flags or flagging tape as needed. </p>
+                <p><strong>Step 2:</strong> Conduct a Large Tree Plot survey. <strong>Record trees with diameter over 9 cm</strong> in the 11.28 m-radius circle plot</p>
+                <p><strong>Step 3:</strong> Conduct a nested 3.99-m radius (7.98 m diameter) Small Tree Plot nested at the center of your Large Tree Plot. <strong>Record all trees with a height of less than 1.3 m tall</strong>. Consider shrubs as a small tree if they have a central stem at 1.3 m height.</p>
+            </div>
+        </div>
+    </section>
+        <!-- Inventory add/metadata panel -->
+    <form id="inventory-form">
+      <fieldset style="display: flex; flex-direction: column;">
+        <legend id="app-main-form-title">Init new inventory</legend>
+        <!-- <p>
+          <label for="inventory-name">Inventory name</label>
+          <input type="text" id="inventory-name" class="inv-mtd" required />
+        </p>
+        <p>
+          <label for="inventory-central_point">Central point plot ID</label>
+          <input type="text" id="inventory-central_point" class="inv-mtd" />
+        </p>
+        <p>
+          <label for="inventory-crew_1">Crew member 1</label>
+          <input type="text" id="inventory-crew_1" class="inv-mtd" />
+        </p>
+        <p>
+          <label for="inventory-crew_2">Crew member 2</label>
+          <input type="text" id="inventory-crew_2" class="inv-mtd" />
+        </p>
+        <p>
+          <label for="inventory-crew_3">Crew member 3</label>
+          <input type="text" id="inventory-crew_3" class="inv-mtd" />
+        </p>
+        <p>
+          <label for="inventory-comments">Comments</label>
+          <textarea id="inventory-comments" class="inv-mtd"></textarea> 
+        </p> -->
+      </fieldset>
+      <p>
+        <button type="submit" id="app-main-form-btn">Create inventory</button>
+      </p>
+    </form>
+    <section id="saved-inventories"></section>
+    <section id="inventory-sheet"></section>
+    <form id="rows-form" style="display:none;" autocomplete="off">
+      <fieldset id="rows-fieldset" class="rows-fieldset">
+        <legend id="rows-title">
+            Rows <span id="rows-number"></span>
+        </legend>
+      </fieldset>
+      <p>
+        <button type="button" id="row-btn-add">Add row</button>
+        <button type="button" id="row-btn-del">Delete row</button>
+        <button type="button" id="row-btn-img">Add picture</button>
+      </p>
+    </form>
+
+    <!-- Panel to add an image -->
+    <div id='img-container' class="img-container" style="display:none;">
+      <div id="close-img-container" class="cross-to-close"><span>x</span></div>
+      <!-- Display image preview -->
+      <div class="img-preview">
+        <p>No files currently selected for upload.</p>
+      </div>
+      <br>
+      <!-- Controls -->
+      <div class="img-container-controlls">
+        <div class="fakebtn-container">
+          <!-- Define an input element to collect the image (hidden) -->
+          <input type="file" accept="image/*" name="image" id="capture-img"
+          class="transparent" capture="camera" multiple/>
+          <!-- Create a fake button to add style -->
+          <div class="fakebtn">
+            <button>Choose/Take picture</button>
+          </div>
+        </div>
+        <!-- Upload button -->
+        <button type="button" id="image-add">Insert image</button>
+      </div>
+    </div>
+    
+    <!-- Panel with the tooltips -->
+    <div class="tooltip-panel">
+        <h2>Inventory's predefined parameters</h2>
+        <section class="accordion" id="tooltip-panel"></section>
+    </div>
+
+    <div class="copyright-box">
+      <a href="http://geografia.unizar.es/" target="_blank" style="text-align: none;">
+        <img style="width:20vw; max-width:20vw" src="logos/department.svg"></img>
+      </a>
+      <a href="https://iuca.unizar.es/proyecto-analisis-dinamico-de-la-resiliencia-de-los-paisajes-forestales-afectados-por-el-fuego-mediante-indicadores-espectrales-multisensor-paf/" target="_blank" style="text-align: none;">
+        <img style="width:9vw; max-width:9vw;" src="logos/paf.svg"></img>
+      </a>
+      <a href="https://github.com/CristianICS/MIFCSheet" target="_blank">
+        <img style="width:4vw; max-width:5vw" src="logos/github.svg"></img>
+      </a>
+    </div>
+
+    <script>
+      // Handle SW if "serviceWorker" exist
+      if ("serviceWorker" in navigator) {
+        // Register the app's service worker
+        // Passing the filename where that worker is defined.
+        navigator.serviceWorker.register("sw.js").then(
+          (registration) => {
+            console.log("Service worker registration successful:",
+            registration);
+          },
+          (error) => {
+            console.error(`Service worker registration failed: ${error}`);
+          },
+        );
+      } else {
+        console.error("Service workers are not supported.");
+      }
+    </script>
+  </body>
+</html>
