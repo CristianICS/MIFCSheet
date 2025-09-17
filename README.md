@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14045596.svg)](https://doi.org/10.5281/zenodo.14045596)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17140284.svg)](https://doi.org/10.5281/zenodo.17140284)
 
 # MIFCSheet PWA
 
@@ -58,3 +58,4 @@ Available parameters to include in *form_columns.js*:
 2. Modify the `inventory_header.js` and `form_columns.js` files in order to adapt the inventory form to your needs.
 3. Access the application through a modern web browser.
 4. Optional: [Convert it into a PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Installing).
+
