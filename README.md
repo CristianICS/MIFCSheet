@@ -27,6 +27,8 @@ First time the APP is loaded, the Service Worker is started and saved. Then, the
 
 ## Customization
 
+Modify the `inventory_header.js` and `form_columns.js` files in order to adapt the inventory form to your needs.
+
 Available parameters to include in *inventory_header.js*:
 
 | Parameter | Description |
@@ -54,8 +56,64 @@ Available parameters to include in *form_columns.js*:
 
 ## How to use
 
-1. Copy all the files to your own server.
-2. Modify the `inventory_header.js` and `form_columns.js` files in order to adapt the inventory form to your needs.
-3. Access the application through a modern web browser.
-4. Optional: [Convert it into a PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Installing).
+Before starting, make sure you have:
 
+- A web server. You can use Python's built-in HTTP server.
+- A device with a web browser installed.
+- Access to the application files contained in the `MIFCSheet` folder.
+
+The application has been tested in the following web browsers:
+
+| Web Browser | Version |
+| ---------------- | ------- |
+| Google Chrome | 133 |
+| Google Chrome for Android | 132 |
+| Firefox | 134 |
+
+For best results, open the application using one of those browsers.
+
+### Server setup
+
+This step is required to serve the application files to the browser. If you have access to a web hosting service, transfer the contents of the `MIFCSheet` folder to the appropriate directory on the server.
+
+In addition, you can configure a local server setup for testing using Python.
+
+1. Download the project files from GitHub, or clone the repository using:
+
+    ```bash
+    git clone <repository-url>
+    ```
+
+2. Move into the folder that contains the application files:
+
+    ```bash
+    cd <repository-folder>
+    ```
+
+3. Make sure the `MIFCSheet` folder is present. This folder contains the files required to run the web application.
+
+4. From the directory that contains the `MIFCSheet` folder, start a simple local server. If Python 3 is installed, run:
+
+    ```bash
+    python -m http.server 8000
+    ```
+
+5. Open one of the tested web browsers and go to:
+
+    ```txt
+    http://localhost:8000/MIFCSheet/
+    ```
+
+The application should load directly in the browser. You can now test the interface and functionality locally.
+
+When testing is complete, return to the terminal and press:
+
+```txt
+Ctrl + C
+```
+
+### Use the application
+
+Once the application has been stored in a folder and made accessible via a server, it can be accessed through a web browser.
+
+The final optional step is to [convert it into a PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Installing).
