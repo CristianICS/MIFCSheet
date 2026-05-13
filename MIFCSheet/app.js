@@ -1,3 +1,11 @@
+import {
+  IndexedDBHandler,
+  Inventory,
+  Inventories,
+  Rows,
+  Row
+} from "./classes.js";
+
 // Init global inventories class
 var inventories = new Inventories();
 // Create the inventories panel

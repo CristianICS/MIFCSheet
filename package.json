@@ -1,0 +1,17 @@
+{
+  "name": "mifcsheet",
+  "version": "1.0.0",
+  "description": "Forest inventory collector app",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "latest",
+    "fake-indexeddb": "latest",
+    "jsdom": "latest",
+    "vitest": "latest"
+  }
+}

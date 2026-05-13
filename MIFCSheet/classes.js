@@ -2,14 +2,14 @@
  * Get a JSON time in locale time.
  * https://stackoverflow.com/a/41467117/23551600
  */
-function getTime() {
-  var date = new Date();
+export function getTime() {
+  const date = new Date();
   // Locale date
-  var loc_date= new Date(date.getTime() - (date.getTimezoneOffset() * 60000))
+  const loc_date= new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
   return loc_date.toJSON();
 }
 
-class IndexedDBHandler {
+export class IndexedDBHandler {
 
   constructor(dbname) {
     this.dbname = dbname;
@@ -270,7 +270,7 @@ class IndexedDBHandler {
   }
 }
 
-class Inventory {
+export class Inventory {
   /** Represent an inventory with its metadata */
   constructor(metadata, id = false) {
     // Extract inventory header col keys
@@ -372,7 +372,7 @@ class Inventory {
   }
 }
 
-class Inventories {
+export class Inventories {
   /** Class to handle inventories. */
   constructor() {
     // Variable to store inventory metadata
@@ -553,7 +553,7 @@ class Inventories {
   }
 }
 
-var init_inventory_panel = function() {
+export var init_inventory_panel = function() {
     // Get the container where inventory rows are
     let container = document.querySelector("#inventory-form fieldset");
     Object.keys(inv_header).forEach((key) => {
@@ -585,7 +585,7 @@ var init_inventory_panel = function() {
     })
 }
 
-class Rows {
+export class Rows {
 
   constructor() {
     this.arrays = [];
