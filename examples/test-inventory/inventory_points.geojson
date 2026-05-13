@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "test_inventory_points",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::22218" } },
+"features": [
+{ "type": "Feature", "properties": {"Name": "point-start", "point_id": 1, "Northing": 5037913.866, "Easting": 515747.608, "Height": 25.929 }, "geometry": { "type": "Point", "coordinates": [ 515747.608, 5037913.86600000038743 ] } },
+{ "type": "Feature", "properties": {"Name": "point-end", "point_id": 2, "Northing": 5037914.537, "Easting": 515737.847, "Height": 26.085 }, "geometry": { "type": "Point", "coordinates": [ 515737.847000000067055, 5037914.537000000476837 ] } }
+]
+}
