@@ -1,14 +1,24 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { indexedDB } from "fake-indexeddb";
+import "fake-indexeddb/auto";
+
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { IDBFactory } from "fake-indexeddb";
 import { IndexedDBHandler } from "../MIFCSheet/classes.js";
 
 describe("IndexedDBHandler", () => {
-  beforeEach(async () => {
-    indexedDB.deleteDatabase("test-db");
+  let db;
+
+  beforeEach(() => {
+    // Completely new in-memory IndexedDB for every test
+    globalThis.indexedDB = new IDBFactory();
+  });
+
+  afterEach(() => {
+    // Close the connection created by IndexedDBHandler
+    db?.db?.close();
   });
 
   it("initializes the expected object stores", async () => {
-    const db = await new IndexedDBHandler("test-db").init();
+    db = await new IndexedDBHandler("test-db").init();
 
     expect(db.db.objectStoreNames.contains("rows")).toBe(true);
     expect(db.db.objectStoreNames.contains("inventories")).toBe(true);
@@ -17,9 +27,15 @@ describe("IndexedDBHandler", () => {
   });
 
   it("adds and retrieves inventory records", async () => {
-    const db = await new IndexedDBHandler("test-db").init();
+    db = await new IndexedDBHandler("test-db").init();
 
-    await db.addData({ name: "Plot 1", location: "Zaragoza" }, "inventories");
+    await db.addData(
+      {
+        name: "Plot 1",
+        location: "Zaragoza",
+      },
+      "inventories"
+    );
 
     const records = await db.getAllData("inventories");
 
@@ -28,21 +44,45 @@ describe("IndexedDBHandler", () => {
   });
 
   it("gets records by indexed inventory id", async () => {
-    const db = await new IndexedDBHandler("test-db").init();
+    db = await new IndexedDBHandler("test-db").init();
 
-    await db.addData({ inventories_id: 10, species: "Pinus" }, "rows");
-    await db.addData({ inventories_id: 20, species: "Quercus" }, "rows");
+    await db.addData(
+      {
+        inventories_id: 10,
+        species: "Pinus",
+      },
+      "rows"
+    );
 
-    const records = await db.getRecords(10, "inventories_id", "rows");
+    await db.addData(
+      {
+        inventories_id: 20,
+        species: "Quercus",
+      },
+      "rows"
+    );
+
+    const records = await db.getRecords(
+      10,
+      "inventories_id",
+      "rows"
+    );
 
     expect(records).toHaveLength(1);
     expect(records[0].species).toBe("Pinus");
   });
 
   it("deletes a record", async () => {
-    const db = await new IndexedDBHandler("test-db").init();
+    db = await new IndexedDBHandler("test-db").init();
 
-    await db.addData({ id: 1, name: "Plot 1" }, "inventories");
+    await db.addData(
+      {
+        id: 1,
+        name: "Plot 1",
+      },
+      "inventories"
+    );
+
     await db.deleteRecord(1, "inventories");
 
     const records = await db.getAllData("inventories");
