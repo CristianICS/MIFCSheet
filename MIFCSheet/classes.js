@@ -716,7 +716,7 @@ export class Rows {
   }
 }
 
-class Row {
+export class Row {
   /**
    * Save inventory rows
    * 
@@ -913,7 +913,7 @@ class Row {
   }
 }
 
-class Images {
+export class Images {
 
   constructor() {
     // https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Image_types

@@ -1,9 +1,11 @@
 import {
+  Images,
   IndexedDBHandler,
   Inventory,
   Inventories,
   Rows,
-  Row
+  Row,
+  init_inventory_panel
 } from "./classes.js";
 
 // Init global inventories class
