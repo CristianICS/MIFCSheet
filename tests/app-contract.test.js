@@ -1,10 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
-const appPath = fileURLToPath(
-  new URL("../MIFCSheet/app.js", import.meta.url)
-);
+const appPath = resolve(process.cwd(), "MIFCSheet", "app.js");
 const appSource = readFileSync(appPath, "utf8");
 
 describe("app.js reliability contracts", () => {

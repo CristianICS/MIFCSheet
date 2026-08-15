@@ -28,7 +28,7 @@ describe("Download", () => {
 
   it("uses the display_col value in the ZIP filename", () => {
     const inventory = new Inventory(
-      { plot_id: "PLOT-23", location: "Zaragoza" },
+      { name: "PLOT-23", comment: "Zaragoza" },
       23
     );
 
@@ -43,7 +43,7 @@ describe("Download", () => {
 
   it("sanitizes characters that are unsafe in filenames", () => {
     const inventory = new Inventory(
-      { plot_id: "PLOT/23:A", location: "Zaragoza" },
+      { name: "PLOT/23:A", comment: "Zaragoza" },
       23
     );
 
@@ -61,12 +61,12 @@ describe("Download", () => {
     const download = Object.create(Download.prototype);
 
     const csv = download.arrayToCsv(
-      [{ plot_id: "PLOT-1", location: undefined }],
-      ["plot_id", "location", "comment"]
+      [{ name: "PLOT-1", comment: undefined }],
+      ["name", "init_point_id", "comment"]
     );
 
     expect(csv).toBe(
-      "plot_id,location,comment\nPLOT-1,,"
+      "name,init_point_id,comment\nPLOT-1,,"
     );
   });
 
@@ -75,7 +75,7 @@ describe("Download", () => {
 
     const csv = download.arrayToCsv([
       {
-        plot_id: "PLOT-1",
+        name: "PLOT-1",
         comment: 'Tree, marked "A"\nchecked'
       }
     ]);
@@ -90,7 +90,7 @@ describe("Download", () => {
 
     download.foldername = "inventory_PLOT-1.zip";
     download.inventory = {
-      plot_id: "PLOT-1",
+      name: "PLOT-1",
       id: 10,
       created_at: "2026-01-01T10:00:00.000Z"
     };
@@ -126,7 +126,7 @@ describe("Download", () => {
 
     download.foldername = "inventory_PLOT-1.zip";
     download.inventory = {
-      plot_id: "PLOT-1",
+      name: "PLOT-1",
       id: 10,
       created_at: "2026-01-01T10:00:00.000Z"
     };
@@ -172,7 +172,7 @@ describe("Download", () => {
 
     download.foldername = "inventory_PLOT-1.zip";
     download.inventory = {
-      plot_id: "PLOT-1",
+      name: "PLOT-1",
       id: 10,
       created_at: "2026-01-01T10:00:00.000Z"
     };

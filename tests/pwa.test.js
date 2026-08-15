@@ -1,16 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
-const swPath = fileURLToPath(
-  new URL("../MIFCSheet/sw.js", import.meta.url)
-);
-const manifestPath = fileURLToPath(
-  new URL("../MIFCSheet/manifest.json", import.meta.url)
-);
-const indexPath = fileURLToPath(
-  new URL("../MIFCSheet/index.html", import.meta.url)
-);
+const swPath = resolve(process.cwd(), "MIFCSheet", "sw.js");
+const manifestPath = resolve(process.cwd(), "MIFCSheet", "manifest.json");
+const indexPath = resolve(process.cwd(), "MIFCSheet", "index.html");
 
 const swSource = readFileSync(swPath, "utf8");
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
