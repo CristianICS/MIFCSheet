@@ -1654,6 +1654,12 @@ export class Download {
       'inventory_metadata.csv',
       this.arrayToCsv([this.inventory], metadataColumns)
     );
+
+    const rowsForExport = this.rows.map(({ id, rown, ...row}) => ({
+      row_id: rown,
+      ...row
+    }));
+    
     zip.file('rows.csv', this.arrayToCsv(this.rows));
 
     // Add inventory images
@@ -1664,13 +1670,32 @@ export class Download {
         zip.file(`inv_images/${img_name}`, array_img, {binary: true});
       })
     }
+
+    // Map IndexedDB row IDs to inventory row numbers
+    const rowNumberById = new Map(
+      this.rows.map((row) => [row.id, row.rown])
+    );
+
     // Add row images
     for (let img of this.row_imgs) {
+      const rowNumber = rowNumberById.get(img.rows_id);
+
+      if (rowNumber === undefined) {
+        throw new Error(
+          `Could not find row number for row image ${img.id}.`
+        );
+      }
+
+      const array_img = await this.transformImage(img.src);
+
+      const img_name = `row_${rowNumber}_image_${img.id}.${img.extension}`;
+
       // Transform image into arrayBuffer
-      await this.transformImage(img.src).then((array_img)=>{
-        let img_name = `row_${img.rows_id}_id_${img.id}.${img.extension}`;
-        zip.file(`row_images/${img_name}`, array_img, {binary: true});
-      })
+      zip.file(
+        `row_images/${img_name}`,
+        array_img,
+        {binary: true}
+      );
     }
 
     // Generate task to download the folder

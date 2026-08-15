@@ -89,6 +89,8 @@ newInvFormEl.addEventListener("submit", async (event) => {
     // Save images
     await images.save(dbHandler, rows.arrays);
 
+    showAppMessage('Data has been saved.', 'success');
+
   } else {
     // Show the 'saved inventories' panel refreshed
     inventories.show();
