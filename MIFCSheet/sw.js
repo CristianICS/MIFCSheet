@@ -1,29 +1,29 @@
 // Version and Cache name will mantain a version control
-const VERSION = "v02";
-const CACHE_NAME = `forest-inventory-${VERSION}`;
+const VERSION = "v07";
+const CACHE_NAME = `forest-inventory-custom-${VERSION}`;
 // The static resources that the app needs to function.
 const APP_STATIC_RESOURCES = [
-  "/",
-  "/app.js",
-  "/classes.js",
-  "/favicon.ico",
-  "/favicon.png",
-  "/form_columns.js",
-  "/index.html",
-  "/inventory_header.js",
-  "/manifest.json",
-  "/species.js",
-  "/style.css",
-  "/sw.js",
-  "/libs/FileSaver.min.js",
-  "/libs/jszip-utils.js",
-  "/libs/jszip.min.js",
+  "",
+  "app.js",
+  "classes.js",
+  "favicon.ico",
+  "favicon.png",
+  "form_columns.js",
+  "index.html",
+  "inventory_header.js",
+  "manifest.json",
+  "species.csv",
+  "style.css",
+  "sw.js",
+  "libs/FileSaver.min.js",
+  "libs/jszip-utils.js",
+  "libs/jszip.min.js",
 // These two folders generate an error in Chrome
 //   "/libs",
 //   "/logos",
-  "/logos/paf.svg",
-  "/logos/department.svg",
-  "/logos/github.svg"
+  "logos/paf.svg",
+  "logos/department.svg",
+  "logos/github.svg"
 ];
 
 // The install event happens when the app is used for the first time,
@@ -31,17 +31,21 @@ const APP_STATIC_RESOURCES = [
 // When an older service worker is being replaced by a new one, the old
 // service worker is used as the PWA's service worker until the new service
 // work is activated.
-self.addEventListener("install", (e) => {
+self.addEventListener("install", (event) => {
   // The ExtendableEvent.waitUntil() method tells the browser that
   // work is ongoing until the promise settles, and it shouldn't terminate
   // the service worker if it wants that work to complete. The waitUntil
   // method is a request to the browser to not terminate the service worker
   // while a task is being executed.
-  e.waitUntil((async () => {
-    const cache = await caches.open(CACHE_NAME);
+  event.waitUntil(
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
       // The Cache.addAll() method takes an array of URLs as a parameter
       // retrieves them, then adds the responses to the given cache.
-      cache.addAll(APP_STATIC_RESOURCES);
+      await cache.addAll(APP_STATIC_RESOURCES);
+
+      // Do not keep the new worker waiting behind the old version
+      await self.skipWaiting();
     })()
   );
 });
@@ -101,7 +105,8 @@ self.addEventListener("fetch", (event) => {
     // Use the FetchEvent's respondWith() method to prevent the browser's
     // default fetch handling, providing the PWA own response promise
     // employing the caches.match() method.
-    event.respondWith(caches.match("/"));
+    const appRoot = new URL("", self.registration.scope).toString();
+    event.respondWith(caches.match(appRoot));
     return;
   }
 

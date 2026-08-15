@@ -35,9 +35,9 @@ Available parameters to include in *inventory_header.js*:
 | --------- | ----------- |
 | `custom_name` | Name describing the variable. |
 | `form_type` | Available options are input, select and textarea. HTML form elements where the variables are included. |
-| `input_type` | When `form_type` is input. Available options are text and number. |
-| `required` | If the variable is mandatory. Boolean. |
-| `display_col` | It is the column which will describe the inventory inside the panel containing all the collected inventories. Usually is a variable with a custom name giving more information than the auto-generated ID. |
+| `input_type` | When `form_type` is input. Available options are text, number and select. |
+| `required` | If the variable is mandatory. Boolean. Default `false`. |
+| `display_col` | It is the column which will describe the inventory inside the panel containing all the collected inventories. Usually is a variable with a custom name giving more information than the auto-generated ID. Default `false`.|
 
 Available parameters to include in *form_columns.js*:
 
@@ -45,8 +45,7 @@ Available parameters to include in *form_columns.js*:
 | --------- | ----------- |
 | `description` | Brief text explaining the feature. It will be showed at the bottom of the inventory page automatically.
 | `form_type` | Available options are input and select.
-| `input_type` | When `form_type` is input. Available options are text and number
-| `input_type` | When `form_type` is input. Available options are text and number
+| `input_type` | When `form_type` is input. Available options are text and number.
 | `number_type` | When `form_type` is input and input_type equals number. Available options are integer and float
 | `values` | When `form_type` is select, this is the field where the user specifies the available options. List of possible values, e.g., [’N’, ’S’].
 | `meanings` | Descriptions for each of the values available, e.g., ['North', 'South'].
@@ -58,7 +57,7 @@ Available parameters to include in *form_columns.js*:
 
 Before starting, make sure you have:
 
-- A web server. You can use Python's built-in HTTP server.
+- A web server. You can use Python's built-in HTTP server but with some limitations.
 - A device with a web browser installed.
 - Access to the application files contained in the `MIFCSheet` folder.
 
@@ -112,8 +111,28 @@ When testing is complete, return to the terminal and press:
 Ctrl + C
 ```
 
+Important note: The image downloading process is not working with the python server approach, only with Apache XAMPP and virtual server.
+
 ### Use the application
 
 Once the application has been stored in a folder and made accessible via a server, it can be accessed through a web browser.
 
 The final optional step is to [convert it into a PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Installing).
+
+## Cite
+
+If you use the application, cite this by using the following bibtex:
+
+```bibtex
+@article{Iranzo2026MIFCSheet,
+  author  = {Iranzo, Cristian and Barber, Quinn E. and Millard, Koreen and Longares, Luis A. and P{\'e}rez-Cabello, Fernando and Ang{\'a}s, Jorge},
+  title   = {{MIFCSheet}: An Open-Source Progressive Web Application for Vegetation Inventory Data Collection},
+  journal = {Journal of Open Research Software},
+  year    = {2026},
+  volume  = {14},
+  number  = {1},
+  pages   = {49},
+  doi     = {10.5334/jors.692},
+  url     = {https://doi.org/10.5334/jors.692}
+}
+```

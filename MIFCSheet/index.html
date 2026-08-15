@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-    <title>Forest Inventory</title>
+    <title>MIFCSheet</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="style.css" />
     <link rel="manifest" href="manifest.json" />
@@ -16,8 +16,7 @@
     <script src="libs/FileSaver.min.js"></script> 
     <script src="libs/jszip.min.js"></script>
     <script src="libs/jszip-utils.js"></script>
-    <!-- Species codes -->
-    <script src="species.js"></script>
+    <!-- Autocomplete sources are loaded from CSV files declared in form_columns.js -->
     <!-- Inventory columns -->
     <script src="form_columns.js"></script>
     <!-- Inventory header columns -->
@@ -26,7 +25,10 @@
   <body>
     <!-- Block app when an image is going to be inserted -->
     <div id="block-app-div" class="block-app-div" style="display:none;"></div>
-    <h1 id="app-title">Forest Inventory</h1>
+    <header class="app-header">
+      <h1 id="app-title">Forest Inventory</h1>
+    </header>
+    <div id="app-message" class="app-message" role="status" aria-live="polite" hidden></div>
     <section class="accordion" style="margin-bottom:5vh !important;">
         <div class="tab">
             <input type="checkbox" name="accordion-1" id="cb1">
@@ -39,37 +41,17 @@
             </div>
         </div>
     </section>
-        <!-- Inventory add/metadata panel -->
+    
+    <!-- Inventory add/metadata panel -->
     <form id="inventory-form">
       <fieldset style="display: flex; flex-direction: column;">
         <legend id="app-main-form-title">Init new inventory</legend>
-        <!-- <p>
-          <label for="inventory-name">Inventory name</label>
-          <input type="text" id="inventory-name" class="inv-mtd" required />
-        </p>
-        <p>
-          <label for="inventory-central_point">Central point plot ID</label>
-          <input type="text" id="inventory-central_point" class="inv-mtd" />
-        </p>
-        <p>
-          <label for="inventory-crew_1">Crew member 1</label>
-          <input type="text" id="inventory-crew_1" class="inv-mtd" />
-        </p>
-        <p>
-          <label for="inventory-crew_2">Crew member 2</label>
-          <input type="text" id="inventory-crew_2" class="inv-mtd" />
-        </p>
-        <p>
-          <label for="inventory-crew_3">Crew member 3</label>
-          <input type="text" id="inventory-crew_3" class="inv-mtd" />
-        </p>
-        <p>
-          <label for="inventory-comments">Comments</label>
-          <textarea id="inventory-comments" class="inv-mtd"></textarea> 
-        </p> -->
       </fieldset>
       <p>
         <button type="submit" id="app-main-form-btn">Create inventory</button>
+        <button type="button" id="exit-inventory-btn" style="display:none;">
+            Exit inventory
+        </button>
       </p>
     </form>
     <section id="saved-inventories"></section>
@@ -103,17 +85,17 @@
           class="transparent" capture="camera" multiple/>
           <!-- Create a fake button to add style -->
           <div class="fakebtn">
-            <button>Choose/Take picture</button>
+            <button>Choose/Take image</button>
           </div>
         </div>
         <!-- Upload button -->
-        <button type="button" id="image-add">Insert image</button>
+        <button type="button" id="image-add">Add image</button>
       </div>
     </div>
     
     <!-- Panel with the tooltips -->
     <div class="tooltip-panel">
-        <h2>Inventory's predefined parameters</h2>
+        <h2>Description of the inventory parameters</h2>
         <section class="accordion" id="tooltip-panel"></section>
     </div>
 
@@ -134,15 +116,16 @@
       if ("serviceWorker" in navigator) {
         // Register the app's service worker
         // Passing the filename where that worker is defined.
-        navigator.serviceWorker.register("sw.js").then(
-          (registration) => {
-            console.log("Service worker registration successful:",
-            registration);
-          },
-          (error) => {
-            console.error(`Service worker registration failed: ${error}`);
-          },
-        );
+        navigator.serviceWorker
+          .register("sw.js", {updateViaCache: "none"})
+          .then(
+            (registration) => {
+              console.log("SW registration successful:", registration);
+            },
+            (error) => {
+              console.error(`SW registration failed: ${error}`);
+            },
+          );
       } else {
         console.error("Service workers are not supported.");
       }

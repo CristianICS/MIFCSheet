@@ -2,7 +2,7 @@
   "name": "ForestInventory",
   "short_name": "FI",
   "description": "Web based and Progressive Web Application to store local forest inventories.",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#ACE1AF",

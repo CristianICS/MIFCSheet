@@ -13,9 +13,13 @@ var inv_columns = {
         'description': 'Genus of the inventoried species. If you want to add a genus that is not in the list, you should define a custom N value or leave the column empty.',
         'form_type': 'input',
         'input_type': 'text',
-        'autocomplete': true,
-        'autocomplete_code': true,
-        'autocomplete_code_column': 'n'
+        'autocomplete': {
+            'source': 'species.csv',
+            'value': 'name',
+            'fill': {
+                'n': 'code'
+            }
+        }
     },
     'n': {
         'custom_name': "N",
@@ -23,8 +27,13 @@ var inv_columns = {
         'form_type': 'input',
         'input_type': 'number',
         'number_type': 'integer',
-        'autocomplete_code': true,
-        'autocomplete_value': 'genus'
+        'autocomplete_code': {
+            'source': 'species.csv',
+            'value': 'code',
+            'fill': {
+                'genus': 'name'
+            }
+        }
     },
     'quadrant': {
         'custom_name': "Quadrant",

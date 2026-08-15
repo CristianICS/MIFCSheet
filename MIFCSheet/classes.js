@@ -30,6 +30,7 @@ export class IndexedDBHandler {
 
       request.onerror = (event) => {
         console.error(`[IndexedDB request error] ${event.target.errorCode}`);
+        reject(event.target.error);
       };
       request.onsuccess = (event) => {
         // Save DB instance
@@ -104,6 +105,7 @@ export class IndexedDBHandler {
     };
     countRequest.onerror = (event) => {
       console.error(`[IBD test fails] ${event.target.error}`);
+      reject(event.target.error)
     };
   }
 
@@ -136,22 +138,35 @@ export class IndexedDBHandler {
   }
 
   /**
-   * Function prepared to add data inside a forEach method.
+   * Add data into the IndexedDB
+   * 
+   * It is resolved only when the transaction is fully completed.
+   * 
    * @param {*} data 
    * @param {*} os 
    */
   async addData(data, os) {
-    try {
-      const transaction = this.db.transaction([os], 'readwrite');
-      const objectStore = transaction.objectStore(os);
-      await this.addRecord(objectStore, data);
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = this.db.transaction([os], 'readwrite');
+        const objectStore = transaction.objectStore(os);
 
-      transaction.onerror = (event) => {
-          console.error(`[IDBTransaction error]: ${event.target.error}`);
-      };
-    } catch (error) {
-      console.error(`Error in addData: ${error}`);
-    }
+        objectStore.put(data);
+
+        transaction.oncomplete = () => {
+            resolve();
+        }
+
+        transaction.onerror = (event) => {
+            console.error(`[IDBTransaction error]: ${event.target.error}`);
+            reject(event.target.error);
+        };
+
+      } catch (error) {
+        console.error(`Error in addData: ${error}`);
+        reject(error);
+      }
+    })
   }
 
   /**
@@ -162,25 +177,57 @@ export class IndexedDBHandler {
    * @returns 
    */
   deleteRecord(id, os) {
-    const transaction = this.db.transaction([os], "readwrite");
-    const objectStore = transaction.objectStore(os);
-    // TODO: The error message is not returned
-    transaction.onerror = (event) => {
-      console.error(`[IBD transaction fails] ${event.target.error}`);
-    };
-    
     return new Promise((resolve, reject) => {
-      const deleteKey = objectStore.delete(id);
-      
-      deleteKey.onsuccess = (event) => {
-        console.log('[Delete action successfull]');
-        resolve();
-      };
+      try {
+        const transaction = this.db.transaction([os], "readwrite");
+        const objectStore = transaction.objectStore(os);
+        
+        objectStore.delete(id);
 
-      deleteKey.onerror = (event) => {
-        console.error(`[IDBDeleteRecord error]: ${event.target.error}`);
-      };
-    })
+        transaction.oncomplete = () => {
+          resolve();
+        };
+
+        transaction.onerror = () => {
+          console.error(`[IBD transaction fails] ${transaction.error}`);
+        };
+
+        transaction.onabort = () => {
+            reject(transaction.error);
+        }
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  deleteRecords(id, indexName, os) {
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = this.db.transaction([os], 'readwrite');
+        const objectStore = transaction.objectStore(os);
+        const index = objectStore.index(indexName);
+        const request = index.openCursor(IDBKeyRange.only(id));
+
+        request.onsuccess = (event) => {
+          const cursor = event.target.result;
+
+          if (cursor) {
+            cursor.delete();
+            cursor.continue();
+          }
+        };
+
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+        transaction.onabort = () => reject(transaction.error);
+
+        request.onerror = (event) => reject(event.target.error);
+
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   /**
@@ -206,6 +253,7 @@ export class IndexedDBHandler {
 
       retrievedObj.onerror = (event) => {
         console.log(`[IDBDeleteRecord error]: ${event.target.error}`);
+        reject(event.target.error)
       };
     })
   }
@@ -242,32 +290,33 @@ export class IndexedDBHandler {
   
       cursorRequest.onerror = function(event) {
           console.error('[getRecords request error]:', event.target.error);
+          reject(event.target.error);
       };
     })
   }
+}
 
-  /**
-   * Add an object inside object store.
-   * 
-   * Use put method to allow updating data if its id already exists.
-   * 
-   * @param {String} objectStore 
-   * @param {Object} data 
-   * @returns 
-   */
-  addRecord(objectStore, data) {
-    return new Promise((resolve, reject) => {
-      const request = objectStore.put(data);
+/**
+ * Obtain the column acting as ID column
+ * 
+ * It yields an error if there is more than one column marked as the column
+ * to display.
+ * 
+ * @returns {Text} The column name that is acting as the name and id of
+ *   the inventory.
+ */
+function getDisplayColumn() {
+  const displayCols = Object.keys(inv_header).filter(
+    key => inv_header[key].display_col === true
+  );
 
-      request.onsuccess = () => {
-          resolve();
-      };
-
-      request.onerror = (event) => {
-          reject(event.target.error);
-      };
-    });
+  if (displayCols.length !== 1) {
+    const msg = `inventory_header.js must contain exactly one "display_col: true". Found ${displayCols.length}.`;
+    alert(msg);
+    throw new Error(msg);
   }
+
+  return displayCols[0];
 }
 
 export class Inventory {
@@ -283,25 +332,26 @@ export class Inventory {
         }
     })
     this.id = id;
-    this.created_at = getTime();
+    this.created_at = metadata.created_at || getTime();
   }
 
   /** Transform current object into an array to store it inside the IDB. */
   parseIdb() {
     let idbArray = {};
+
     Object.keys(inv_header).forEach((key) => {
-        idbArray[key] = this[key]
-    })
-    if (this.id){
-      idbArray['id'] = this.id;
-    } else {
-      // When the inventory has an id, it's because its is stored inside db.
-      // So if inv has an id, it has a creation date too.
-      // Add creation date only when inventory is saved for the first time.
-      idbArray['created_at'] = this.created_at;
-    }
+        idbArray[key] = this[key];
+    });
+
+    if (this.id) {
+      idbArray.id = this.id;
+    } 
+
+    idbArray.created_at = this.created_at;
+
     return idbArray;
   }
+
   /**
    * Create inventory object access in HTML.
    * 
@@ -312,12 +362,11 @@ export class Inventory {
   toHtml(){
     // Init li element
     const invEl = document.createElement("li");
-    // Grab the name of the column defined for this
-    let name_col = Object.keys(inv_header).filter((k) => {
-        return Object.keys(inv_header[k]).includes('display_col');
-    })
+    
+    const displayCol = getDisplayColumn();
+    invEl.textContent = `Inventory ${this[displayCol]}`;
  
-    invEl.textContent = `Inventory ${this[name_col]}`;
+    invEl.textContent = `Inventory ${this[displayCol]}`;
     // Update style
     invEl.classList.add('savedinv');
     // Store the inv id
@@ -363,12 +412,16 @@ export class Inventory {
    * 
    * @param {IndexedDBHandler} dbHandler 
    */
-  delete(dbHandler) {
-    // Show a confirm message
-    let msg = `Are you sure you want to delete the inventory "${this.name}"`
-    if (confirm(msg)){
-      dbHandler.deleteRecord(this.id, 'inventories');
-    }
+  async delete(dbHandler) {
+    const displayCol = getDisplayColumn();
+    let msg = `Are you sure you want to delete the inventory "${this[displayCol]}"`
+
+    if (!confirm(msg)){
+      return false;
+    };
+    
+    await dbHandler.deleteRecord(this.id, 'inventories');
+    return true;
   }
 }
 
@@ -475,9 +528,13 @@ export class Inventories {
     });
 
     let inventory = this.initInv(metadataDict);
- 
-    // Check if there is a stored inventory with the same name + diffrnt. props
-    let duplicatedInv = this.selectByName(inventory.name);
+    
+    const displayCol = getDisplayColumn();
+    // Check if there is a stored inventory with the same name
+    let duplicatedInv = this.selectByColumn(
+      displayCol,
+      inventory[displayCol]
+    );
 
     if (duplicatedInv) {
       // Check if the duplicated metadata has duplicated properties
@@ -485,7 +542,9 @@ export class Inventories {
         // Overwrite the inv metadata
         if (confirm(this.confMsg)){
           // Replace duplicated inventory metadata by switching the ids
-          inventory['id'] = duplicatedInv['id'];
+          inventory.id = duplicatedInv.id;
+          inventory.created_at = duplicatedInv.created_at;
+
           await dbHandler.addData(inventory.parseIdb(), 'inventories');
         }
       }
@@ -505,13 +564,14 @@ export class Inventories {
   }
   
   /**
-   * Retrieve inventory metadata by inventory's  name
+   * Select one row by a value inside a column
    * 
-   * @param {String} name 
-   * @returns {Object}
+   * @param {String} column The target column where find the `value`.
+   * @param {String} value Value inside the `column` to filter with.
+   * @returns {Object} Filtered column's row values.
    */
-  selectByName(name) {
-    return this.metadata.find((inv) => inv.name == name);
+  selectByColumn(column, value) {
+    return this.metadata.find((inv) => inv[column] === value);
   }
 
   /**
@@ -539,16 +599,35 @@ export class Inventories {
    * @param {IndexedDBHandler} dbHandler 
    */
   async delete(id, dbHandler) {
-    // Delete inventory from IDB
-    await this.selectById(id).delete(dbHandler);
-    // Delete its rows too
-    // Init a new Rows element to handle rows
+    const inventory = this.selectById(id);
+
+    // Stop the entire deletion process if the user cancels
+    const deleted = await inventory.delete(dbHandler);
+    
+    if (!deleted) {
+      return;
+    }
+
+    // Delete images directly linked to the inventory
+    await dbHandler.deleteRecords(
+       id,
+      'inventories_id',
+      'inventory_images'
+    );
+
+    // Delete any remaining row images linked to the inventory
+    await dbHandler.deleteRecords(
+      id,
+      'inventories_id',
+      'row_images'
+    );
+
+    // Delete associated rows
     let rows = new Rows();
-    // Get inventory's rows
     await rows.init(id, dbHandler);
-    // Delete rows (without showing a confirmation message)
     await rows.delete(dbHandler, false);
-    // Remove deleted inventory from Inventories.metadata
+
+    // Remove inventory from memory
     this.metadata = this.metadata.filter((mtd) => {return mtd.id != id});
   }
 }
@@ -568,18 +647,48 @@ export var init_inventory_panel = function() {
         lbl.setAttribute('for', key_id);
         lbl.innerText = props['custom_name'];
         p.appendChild(lbl)
-        // Define input
-        let inp = document.createElement(props['form_type']);
-        inp.id = key_id;
-        inp.classList.add("inv-mtd");
-        if (Object.keys(props).includes("required")) {
-            inp.setAttribute("required", true)
-        }
-        if (props['form_type'] == 'input') {
-            inp.setAttribute('type', props['input_type']);
-        }
-        p.appendChild(inp);
 
+        // Allow select elements inside the inventory header
+        if (props['form_type'] == 'select') {
+            let inp = document.createElement('select');
+            inp.id = key_id;
+            inp.classList.add('inv-mtd');
+
+            // Add empty default option
+            let defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '';
+            inp.appendChild(defaultOption);
+
+            if (props.required) {
+                inp.required = true;
+            }
+
+            props['values'].forEach((value, i) => {
+
+                let option = document.createElement('option');
+
+                option.value = value;
+                option.innerText = props['meanings'][i];
+
+                inp.appendChild(option);
+            });
+
+            p.appendChild(inp);
+        } else {
+            // Define input
+            let inp = document.createElement(props['form_type']);
+            inp.id = key_id;
+            inp.classList.add("inv-mtd");
+            if (Object.keys(props).includes("required")) {
+                inp.setAttribute("required", true)
+            }
+            if (props['form_type'] == 'input') {
+                inp.setAttribute('type', props['input_type']);
+            }
+            p.appendChild(inp);
+        }
+        
         // Add the inventory header row to the HTML container
         container.appendChild(p);
     })
@@ -646,11 +755,17 @@ export class Rows {
         let val = input.value;
         // Transform the numeric values
         if (Object.keys(inv_columns[key]).includes('number_type')){
-            if (inv_columns[key]['number_type'] == 'integer') {
+            if (val === '') {
+                // Prevent blank fields be converted into NaN string
+                inputsDict[key] = '';
+
+            } else if (inv_columns[key]['number_type'] == 'integer') {
                 inputsDict[key] = parseInt(val);
+
             } else if (inv_columns[key]['number_type'] == 'float') {
                 inputsDict[key] = parseFloat(val);
             }
+
         } else {
             // Remain text format
             inputsDict[key] = val
@@ -707,12 +822,17 @@ export class Rows {
     }
   }
 
-  save(invId, dbHandler) {
-    this.arrays.forEach((row) => {
+  async save(invId, dbHandler) {
+    const promises = this.arrays.map((row) => {
       let rowDict = row.parseIdb();
       rowDict['inventories_id'] = invId;
-      row.save(rowDict, dbHandler);
+
+      return row.save(rowDict, dbHandler);
     });
+
+    // Wait until all the rows are saved by propagating these promises
+    // and waiting for them
+    await Promise.all(promises);
   }
 }
 
@@ -794,6 +914,12 @@ export class Row {
         inp = document.createElement('select');
         inp.id = inpId;
         inp.name = key;
+
+        let defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = '';
+        inp.appendChild(defaultOption);
+
         // Construct the available options
         let options = col_meta['values'];
         let options_objs = options.map((opt) => {
@@ -832,35 +958,13 @@ export class Row {
           inp.classList.add('row-input');
       }
 
-      // Insert the autocomplete columns inside a div to handle autocomplete
-      if (Object.keys(col_meta).includes('autocomplete')) {
-        // Select only the desired elements inside the autocomplete
-        let meta_filtered = species_metadata.filter(item => item.type === key);
-        // Get all the names as an Array
-        let names = meta_filtered.map((i) => {return i.name});
-        autocomplete(inp, names, this.rown);
+      // Autocomplete behavior is declared entirely in form_columns.js.
+      if (col_meta['autocomplete']) {
+        autocomplete(inp, col_meta['autocomplete'], this.rown);
         let divAuto = document.createElement('div');
         divAuto.classList.add('autocomplete');
         divAuto.appendChild(inp);
         var_div.appendChild(divAuto);
-        newr.appendChild(var_div);
-      } else if (Object.keys(col_meta).includes('autocomplete_code')) {
-        // Add a function to catch the name from its code
-        // First, link the input with the column which contains the names
-        inp.setAttribute('data-name-column', col_meta['autocomplete_value']);
-        // Every time the value of the code in the column changes,
-        // try to detect its code from the JSON
-        inp.addEventListener('change', (el) => {
-          let code = el.target.value;
-          let column_name = el.target.dataset.nameColumn;
-          let name = species_metadata.filter((sp) => {
-            return sp.code == code & sp.type == column_name
-        })[0].name;
-          // Get the row number to select the "genus" input
-          let rowN = el.target.id.split('-')[1];
-          document.querySelector(`#${column_name}-${rowN}`).value = name;
-        });
-        var_div.appendChild(inp);
         newr.appendChild(var_div);
       } else {
         var_div.appendChild(inp);
@@ -885,11 +989,16 @@ export class Row {
    */
   async delete(dbHandler) {
     if (this.hasOwnProperty('id')){
+      // Delete images linked to this row first
+      await dbHandler.deleteRecords(this.id, 'rows_id', 'row_images');
+
+      // Delete row
       await dbHandler.deleteRecord(this.id, 'rows');
     }
+
     // Delete the row inside HTML container (if it exists)
-    let toDel = document.querySelector(`#rown-${this.rown}`)
-    if (toDel){toDel.remove()};
+    const toDel = document.querySelector(`#rown-${this.rown}`)
+    if (toDel) {toDel.remove()};
   }
 
   /**
@@ -909,7 +1018,7 @@ export class Row {
   }
 
   save(rowDict, dbHandler) {
-    dbHandler.addData(rowDict, 'rows');
+    return dbHandler.addData(rowDict, 'rows');
   }
 }
 
@@ -969,7 +1078,13 @@ export class Images {
    * or an inventory (1 or 2 respectively).
    */
   add(id, inventory_id = false) {
-    document.querySelectorAll('.img-to-add').forEach((img) => {
+    const pendingImages = Array.from(document.querySelectorAll('.img-to-add'));
+
+    if (pendingImages.length === 0) {
+      throw new Error('No valid image is ready to be inserted.');
+    }
+
+    pendingImages.forEach((img) => {
       let img_metadata = {
         uid: this.content.length + 1,
         id: id,
@@ -977,12 +1092,17 @@ export class Images {
         fileSize: img.dataset.filesize,
         extension: img.dataset.fileExtension,
         created_at: getTime(),
-        type: inventory_id != false ? 'row' : 'inventory'
+        type: inventory_id !== false ? 'row' : 'inventory'
       };
-      // Link row images with its parent inventory
-      if (inventory_id==1){img_metadata.inventories_id = inventory_id}
+
+      if (inventory_id !== false) {
+        img_metadata.inventories_id = inventory_id;
+      }
+
       this.content.push(img_metadata);
     });
+
+    return pendingImages.length;
   }
 
   /**
@@ -1053,11 +1173,14 @@ export class Images {
             para.appendChild(image);
           }, false);
 
+          reader.addEventListener("error", function () {
+            para.textContent = `File name ${file.name}: The image could not be read.`;
+          }, false);
+
           reader.readAsDataURL(file);
 
         } else {
           para.textContent = `File name ${file.name}: Not a valid file type. Update your selection.`;
-          listItem.appendChild(para);
         }
         preview.appendChild(para);
       }
@@ -1067,6 +1190,8 @@ export class Images {
   /**
    * Save images inside indexed DB
    * 
+   * Verify the row before accessing row.id
+   * 
    * Two options:
    * - Row's images required the row elements with indexedDB ids. The id
    * stored in Images.content array contains the row number.
@@ -1075,45 +1200,59 @@ export class Images {
    * 
    * @param {Rows.arrays} rows Array with saved rows properties.
    */
-  save(dbHandler, rows = false) {
-    this.content.forEach((img) => {
-      // Switch the form ids to the IndexedDB ones
-      if (rows != false & img.type != 'inventory') {
+  async save(dbHandler, rows = false) {
+    
+    while (this.content.length > 0) {
+      // Always process the first pending image.
+      const img = this.content[0];
+      const imgData = {...img};
 
-        // Select the row containing the iterated image
-        let row = rows.filter((r)=>{
-          return r.rown == Number(img.id.split('-')[1])});
+      if (imgData.type === "row") {
 
-        // Switch the image id by the indexedDB one
-        img['rows_id'] = row[0].id;
+        if (rows === false) {
+            throw new Error('Rows are required to save row images.');
+        }
+
+        const rowNumber = Number(imgData.id.split('-')[1]);
+
+        const row = rows.find((r) => r.rown === rowNumber);
+
+        if (!row || !row.id) {
+          throw new Error(
+            `Could not find the saved row for image linked to row ${rowNumber}.`
+          );
+        }
+
+        // Switch the form IDs to the IndexedDB ones
+        imgData.rows_id = row.id;
+        
         // Delete unnecessary properties
-        delete img.id; // The row_id has been inserted
-        delete img.uid; // The id is going to create automatically
-        delete img.type;
-        // Save data inside indexedDB
-        dbHandler.addData(img, 'row_images');
+        delete imgData.id;
+        delete imgData.uid;
+        delete imgData.type;
+        
+        // Wait until IndexedDB confirms the write.
+        await dbHandler.addData(imgData, 'row_images');
 
-      } else if (img.type == "inventory") {
-        // Change the id property to join DB schema
-        img.inventories_id = img.id;
+      } else if (imgData.type === "inventory") {
+        // Change the id property to join indexedDB schema
+        imgData.inventories_id = imgData.id;
+
         // Delete unnecessary properties
-        delete img.id; // The inventory_id has been inserted
-        let uid = img.uid;
-        delete img.uid; // The id is going to create automatically
-        delete img.type;
-        // Save data inside indexedDB
-        dbHandler.addData(img, 'inventory_images');
+        delete imgData.id;
+        delete imgData.uid;
+        delete imgData.type;
+
+        // Wait until IndexedDB confirms the write.
+        await dbHandler.addData(img, 'inventory_images');
+
+      } else {
+        throw new Error(`Unknown image type: ${imgData.type}`);
       }
-
-      this.content = [];
-      // If the images are inserted correctly, remove it
-      // 1. Create a list to store the wrong inserted items
-      // (with id and type properties)
-      // 2. Remove all image except above ones
-      // this.content = this.content.filter(item => item.uid !== uid);
-      // Else, add again the wrong inserted ones
-      // TODO
-    })
+      
+      // Remove only the image that was succesfully saved.
+      this.content.shift();
+    }
   }
 
   /** 
@@ -1164,129 +1303,236 @@ export class Images {
     });
   }
 
+  /**
+   * Clear pending images when exiting the inventory
+   */
+  clearPending() {
+    this.content = [];
+  }
+
 }
 
 /**
- * Set autocomplete function in all the genus inputs
- * 
- * @param {HTMLInputElement} inp Text input element
- * @param {Array} arr Array of possible autocompleted values
- * @param {Number} rown Row number to select the input with the genus code and fill in.
+ * Cache CSV-backed autocomplete datasets so each file is fetched only once.
  */
-function autocomplete(inp, arr, rown) {
-  var currentFocus;
-  // Execute a function when someone writes in the text field
-  inp.addEventListener("input", function (e) {
-    // Get the input values
-    var a, b, i, val = this.value;
-    // close any already open lists of autocompleted values
-    closeAllLists();
-    if (!val) { return false; }
-    currentFocus = -1;
-    // create a DIV element that will contain the items (values)
-    a = document.createElement("DIV");
-    a.setAttribute("id", this.id + "autocomplete-list");
-    a.setAttribute("class", "autocomplete-items");
-    // append the DIV element as a child of the autocomplete container
-    this.parentNode.appendChild(a);
-    // for each item in the array...
-    for (i = 0; i < arr.length; i++) {
-      let arrItem = arr[i].substr(0, val.length);
-      // check if the item starts with the same letters as the inp. val.
-      if (arrItem.toUpperCase() == val.toUpperCase()) {
-        // Create a DIV element for each matching element
-        b = document.createElement("DIV");
-        // make the matching letters bold
-        b.innerHTML = "<strong>" + arrItem + "</strong>";
-        b.innerHTML += arr[i].substr(val.length);
-        // insert a input field that will hold the current array item's value
-        b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
-        // execute a function when someone clicks on the item value (DIV element)
-        b.addEventListener("click", function(e) {
-          // insert the value for the autocomplete text field
-          inp.value = this.getElementsByTagName("input")[0].value;
-          // close the list of autocompleted values,
-          // (or any other open lists of autocompleted values
-          closeAllLists();
+const autocompleteDataCache = new Map();
 
-          // Select column name where the value comes from
-          let column_name = inp.name;
+/**
+ * Parse a CSV string into an array of objects.
+ * Quoted fields and escaped double quotes are supported.
+ *
+ * @param {String} text CSV text.
+ * @returns {Array<Object>}
+ */
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let quoted = false;
 
-          if (inv_columns[column_name].autocomplete_code) {
-            // Save the column name where the code is included
-            let target_col = inv_columns[column_name]['autocomplete_code_column'];
-            // Get the code of the item selected with autocomplete
-            let code = species_metadata
-            .filter((i) => {
-              return i.name == inp.value & i.type == column_name})[0].code;
-            
-            document.querySelector(`#${target_col}-${rown}`).value = code;
-          }
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
 
-        });
-        a.appendChild(b);
+    if (char === '"') {
+      if (quoted && text[i + 1] === '"') {
+        field += '"';
+        i++;
+      } else {
+        quoted = !quoted;
       }
+    } else if (char === ',' && !quoted) {
+      row.push(field);
+      field = "";
+    } else if ((char === '\n' || char === '\r') && !quoted) {
+      if (char === '\r' && text[i + 1] === '\n') i++;
+      row.push(field);
+      field = "";
+      if (row.some((value) => value !== "")) rows.push(row);
+      row = [];
+    } else {
+      field += char;
     }
+  }
+
+  row.push(field);
+  if (row.some((value) => value !== "")) rows.push(row);
+  if (rows.length === 0) return [];
+
+  const headers = rows.shift().map((header, index) => {
+    const cleanHeader = header.trim();
+    return index === 0 ? cleanHeader.replace(/^\uFEFF/, "") : cleanHeader;
   });
-  // execute a function presses a key on the keyboard
-  inp.addEventListener("keydown", function(e) {
-    var x = document.getElementById(this.id + "autocomplete-list");
-    if (x) x = x.getElementsByTagName("div");
-    if (e.keyCode == 40 || e.code == 'ArrowDown') {
-      // If the arrow DOWN key is pressed,
-      // increase the currentFocus variable
-      currentFocus++;
-      // and and make the current item more visible
-      addActive(x);
-    } else if (e.keyCode == 38 || e.code == 'ArrowUp') { //up
-      /* If the arrow UP key is pressed,
-      decrease the currentFocus variable:*/
-      currentFocus--;
-      /*and and make the current item more visible:*/
-      addActive(x);
-    } else if (e.keyCode == 13 || e.code == 'Enter') {
-      // If ENTER key, prevent the form from being submitted
-      e.preventDefault();
-      if (currentFocus > -1) {
-        // and simulate a click on the "active" item
-        if (x) x[currentFocus].click();
-      }
-    }
-  });
-  /** Classify an item as "active" */
-  function addActive(x) {
-    if (!x) return false;
-    /*start by removing the "active" class on all items:*/
-    removeActive(x);
-    if (currentFocus >= x.length) currentFocus = 0;
-    if (currentFocus < 0) currentFocus = (x.length - 1);
-    /*add class "autocomplete-active":*/
-    x[currentFocus].classList.add("autocomplete-active");
-  }
-  /** Remove the "active" class from all autocomplete items */
-  function removeActive(x) {
-    for (var i = 0; i < x.length; i++) {
-      x[i].classList.remove("autocomplete-active");
-    }
-  }
-  /** Close all autocomplete lists in the document, except the one
-   * passed as argument.
-  */
-  function closeAllLists(elmnt) {
-    var x = document.getElementsByClassName("autocomplete-items");
-    for (var i = 0; i < x.length; i++) {
-      if (elmnt != x[i] && elmnt != inp) {
-        x[i].parentNode.removeChild(x[i]);
-      }
-    }
-  }
-  /*execute a function when someone clicks in the document:*/
-  document.addEventListener("click", function (e) {
-      closeAllLists(e.target);
+
+  return rows.map((values) => {
+    const item = {};
+    headers.forEach((header, index) => {
+      item[header] = (values[index] ?? "").trim();
+    });
+    return item;
   });
 }
 
-class Download {
+/**
+ * Load and cache an autocomplete CSV file.
+ *
+ * @param {String} source Relative URL to the CSV file.
+ * @returns {Promise<Array<Object>>}
+ */
+function loadAutocompleteData(source) {
+  if (!autocompleteDataCache.has(source)) {
+    const request = fetch(source)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Could not load autocomplete source: ${source}`);
+        }
+        return response.text();
+      })
+      .then(parseCsv)
+      .catch((error) => {
+        autocompleteDataCache.delete(source);
+        console.error(error);
+        return [];
+      });
+
+    autocompleteDataCache.set(source, request);
+  }
+
+  return autocompleteDataCache.get(source);
+}
+
+/**
+ * Populate other columns in the same inventory row from a selected record.
+ *
+ * @param {Object} record Selected CSV record.
+ * @param {Object} fillMap target inventory column -> CSV column.
+ * @param {Number} rown Inventory row number.
+ */
+function fillAutocompleteColumns(record, fillMap, rown) {
+  Object.entries(fillMap || {}).forEach(([targetColumn, sourceField]) => {
+    const targetInput = document.querySelector(`#${targetColumn}-${rown}`);
+    if (targetInput) {
+      targetInput.value = record[sourceField] ?? "";
+    }
+  });
+}
+
+/**
+ * Add CSV-backed autocomplete to an input.
+ *
+ * Schema in form_columns.js:
+ * autocomplete: {
+ *   source: 'species.csv',
+ *   value: 'name',
+ *   fill: { species_code: 'code' }
+ * }
+ *
+ * Only the CSV columns referenced by `value` and `fill` are required.
+ *
+ * @param {HTMLInputElement} inp Text input element.
+ * @param {Object} config Autocomplete configuration.
+ * @param {Number} rown Inventory row number.
+ */
+function autocomplete(inp, config, rown) {
+  let currentFocus = -1;
+  const dataPromise = loadAutocompleteData(config.source);
+
+  inp.addEventListener("input", async function () {
+    const val = this.value;
+    closeAllLists();
+    if (!val) return;
+
+    const data = await dataPromise;
+    // Ignore stale async results if the user has typed again.
+    if (this.value !== val) return;
+
+    currentFocus = -1;
+    const list = document.createElement("div");
+    list.setAttribute("id", this.id + "autocomplete-list");
+    list.setAttribute("class", "autocomplete-items");
+    this.parentNode.appendChild(list);
+
+    const searchValue = val.toLocaleLowerCase();
+
+    data.forEach((record) => {
+      const itemValue = String(record[config.value] ?? "");
+      if (!itemValue.toLocaleLowerCase().startsWith(searchValue)) return;
+
+      const item = document.createElement("div");
+      const strong = document.createElement("strong");
+      strong.textContent = itemValue.slice(0, val.length);
+      item.appendChild(strong);
+      item.appendChild(document.createTextNode(itemValue.slice(val.length)));
+
+      item.addEventListener("click", () => {
+        inp.value = itemValue;
+        fillAutocompleteColumns(record, config.fill, rown);
+        closeAllLists();
+      });
+
+      list.appendChild(item);
+    });
+  });
+
+  // Also support a value typed manually instead of selected from the list.
+  inp.addEventListener("change", async function () {
+    const value = this.value.trim().toLocaleLowerCase();
+    if (!value) return;
+
+    const data = await dataPromise;
+    const record = data.find((item) =>
+      String(item[config.value] ?? "").trim().toLocaleLowerCase() === value
+    );
+
+    if (record) {
+      this.value = record[config.value];
+      fillAutocompleteColumns(record, config.fill, rown);
+    }
+  });
+
+  inp.addEventListener("keydown", function (e) {
+    let items = document.getElementById(this.id + "autocomplete-list");
+    if (items) items = items.getElementsByTagName("div");
+
+    if (e.code === 'ArrowDown') {
+      currentFocus++;
+      addActive(items);
+    } else if (e.code === 'ArrowUp') {
+      currentFocus--;
+      addActive(items);
+    } else if (e.code === 'Enter') {
+      e.preventDefault();
+      if (currentFocus > -1 && items) items[currentFocus].click();
+    }
+  });
+
+  function addActive(items) {
+    if (!items || items.length === 0) return;
+    removeActive(items);
+    if (currentFocus >= items.length) currentFocus = 0;
+    if (currentFocus < 0) currentFocus = items.length - 1;
+    items[currentFocus].classList.add("autocomplete-active");
+  }
+
+  function removeActive(items) {
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      items[i].classList.remove("autocomplete-active");
+    }
+  }
+
+  function closeAllLists(element) {
+    const lists = document.getElementsByClassName("autocomplete-items");
+    for (let i = lists.length - 1; i >= 0; i--) {
+      if (element !== lists[i] && element !== inp) {
+        lists[i].parentNode.removeChild(lists[i]);
+      }
+    }
+  }
+
+  document.addEventListener("click", (e) => closeAllLists(e.target));
+}
+
+export class Download {
 
   /**
    * Create an object with data to download.
@@ -1295,11 +1541,15 @@ class Download {
    * @param {Inventories} inventories
    */
   constructor(inventoryId, inventories) {
-    // Construct the output folder name
-    this.foldername = `inventory_${inventoryId}.zip`;
-
     // Get active inventory metadata
     this.inventory = inventories.selectById(inventoryId);
+    
+    // Use the column marked as display_col for the ZIP name
+    const displayCol = getDisplayColumn()
+    const displayValue = this.inventory[displayCol];
+
+    // Construct the output folder name
+    this.foldername = `inventory_${displayValue}.zip`;
   }
 
   /** Retrieve the data to download from IndexedDB */
@@ -1338,21 +1588,36 @@ class Download {
    * @param {Array} arr Array of objects with properties to convert in csv
    * @param {Array} colnames Columnames inside an array
    */
-  arrayToCsv(arr){
-    // Set column names as the first object inside the final array
-    let transformedArr  = [Object.keys(arr[0])];
-    
-    // Get row values
-    arr.forEach((row) => {
-      let values = Object.values(row)
-      transformedArr.push(values);
-    });
-    // Join each array values with a comma, and then with the \n tag
-    var csv = transformedArr.map(e => e.join(",")).join("\n");
+  arrayToCsv(arr, colnames = null) {
+    if (!Array.isArray(arr) || arr.length === 0) {
+      return '';
+    }
 
-    return csv;
+    const columns = colnames || Array.from(
+      new Set(arr.flatMap((row) => Object.keys(row)))
+    );
+
+    const escapeCsvValue = (value) => {
+      const text = String(value ?? '');
+
+      // Quote CSV values containing commas, quotation marks, or line breaks
+      if (/[",\n]/.test(text)) {
+        return `"${text.replace(/"/g, '""')}"`;
+      }
+
+      return text;
+    };
+
+    const csvRows = [
+      columns,
+        ...arr.map((row) => columns.map((column) => row[column] ?? ''))
+      ];
+
+    return csvRows
+    .map((row) => row.map(escapeCsvValue).join(','))
+    .join('\n');
   }
-  
+
   /**
   * Retrieve arrayBuffer from a base64 image
   * ===============================================
@@ -1383,8 +1648,12 @@ class Download {
   async download() {
     // Create new zip object
     var zip = new JSZip();
-    // Add data
-    zip.file('inventory_metadata.csv', this.arrayToCsv([this.inventory]));
+    // Add data. The metadata CSV always follows inventory_header.js.
+    const metadataColumns = [...Object.keys(inv_header), 'id', 'created_at'];
+    zip.file(
+      'inventory_metadata.csv',
+      this.arrayToCsv([this.inventory], metadataColumns)
+    );
     zip.file('rows.csv', this.arrayToCsv(this.rows));
 
     // Add inventory images

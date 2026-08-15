@@ -6,9 +6,13 @@ var inv_columns = {
         'description': 'Inventoried species. If you want to add a species that is not in the list, you should define a custom N value or leave the column empty.',
         'form_type': 'input',
         'input_type': 'text',
-        'autocomplete': true,
-        'autocomplete_code': true,
-        'autocomplete_code_column': 'n'
+        'autocomplete': {
+            'source': 'species.csv',
+            'value': 'name',
+            'fill': {
+                'n': 'code'
+            }
+        },
     },
     'n': {
         'custom_name': "N",
@@ -16,8 +20,13 @@ var inv_columns = {
         'form_type': 'input',
         'input_type': 'number',
         'number_type': 'integer',
-        'autocomplete_code': true,
-        'autocomplete_value': 'species'
+        'autocomplete': {
+            'source': 'species.csv',
+            'value': 'code',
+            'fill': {
+                'species': 'name'
+            }
+        }
     },
     'd': {
         'custom_name': "D",

@@ -1,4 +1,5 @@
 import {
+  Download,
   Images,
   IndexedDBHandler,
   Inventory,
@@ -16,6 +17,42 @@ init_inventory_panel();
 var images = new Images();
 // Init Database
 const dbHandler = new IndexedDBHandler('forestInventory');
+
+// Inventory-exit control and temporary status messages
+const exitInventoryBtn = document.querySelector('#exit-inventory-btn');
+const appMessage = document.querySelector('#app-message');
+let appMessageTimeout;
+
+function showAppMessage(message, type = 'success') {
+  clearTimeout(appMessageTimeout);
+  appMessage.textContent = message;
+  appMessage.className = `app-message app-message--${type}`;
+  appMessage.hidden = false;
+
+  appMessageTimeout = setTimeout(() => {
+    appMessage.hidden = true;
+  }, 3500);
+}
+
+function exitOpenInventory() {
+  if (isNaN(inventories.activeid)) {
+    return;
+  }
+
+  if (!confirm('Unsaved data will be erased. Are you sure?')) {
+    return;
+  }
+
+  document.getElementById('app-main-form-title').textContent = 'Init new inventory';
+  document.getElementById('app-main-form-btn').textContent = 'Create Inventory';
+  exitInventoryBtn.style.display = 'none';
+
+  // This clears the metadata form, hides and clears the rows,
+  // shows saved inventories, and resets inventories.activeid.
+  images.clearPending();
+  inventories.show();
+}
+
 // Show the saved inventories
 dbHandler.init().then(async (db) => {
   await inventories.load(db);
@@ -40,21 +77,24 @@ newInvFormEl.addEventListener("submit", async (event) => {
     // Initialize the 'rows' object and collect the displayed rows
     let rows = new Rows();
     rows.collect();
-    rows.save(inventories.activeid, dbHandler);
+
+    // Guarantees that all row-save promises finish before them are read back
+    await rows.save(inventories.activeid, dbHandler);
+
     // Collect again the rows from IDB to show its ids
     await rows.init(inventories.activeid, dbHandler);
     rows.ls();
     rows.show();
 
     // Save images
-    images.save(dbHandler, rows.arrays);
-  }
-  else {
+    await images.save(dbHandler, rows.arrays);
+
+  } else {
     // Show the 'saved inventories' panel refreshed
     inventories.show();
+    // Save inventory's images
+    await images.save(dbHandler);
   }
-  // Save inventory's images
-  images.save(dbHandler);
 });
 
 // Get saved inventories buttons parent HTML block
@@ -81,6 +121,7 @@ savedInventoriesEl.addEventListener("click", async (event) => {
       document.getElementById('app-main-form-btn').textContent = "Save";
       // Display the row panel
       document.getElementById('rows-form').style.display = 'block';
+      exitInventoryBtn.style.display = 'inline-block';
       // Show rows
       let rows = new Rows();
       await rows.init(id, dbHandler);
@@ -160,23 +201,10 @@ rowsEl.addEventListener("click", async (event) => {
   }
 });
 
-// When click on app title, go to the initial UI
-var appTitle = document.querySelector('#app-title');
-appTitle.addEventListener('click', (e) => {
-  // Confirm to prevent close an open inventory with unsaved data
-  if (confirm('Unsaved data will be erased. Are you sure?')) {
-    // Update UI
-    // Open the saved inventories form
-    document.getElementById('saved-inventories').innerHTML = "";
-    // Change #app-main-form-title
-    let editTitle = "Init new inventory"
-    document.getElementById('app-main-form-title').textContent = editTitle;
-    // Change #app-main-form-btn text
-    document.getElementById('app-main-form-btn').textContent = "Create Inventory";
-    // Display the saved inventories panel
-    inventories.show();
-  }
-})
+// Keep the title as an alternative way to exit an opened inventory.
+const appTitle = document.querySelector('#app-title');
+appTitle.addEventListener('click', exitOpenInventory);
+exitInventoryBtn.addEventListener('click', exitOpenInventory);
 
 // Handle images
 // Load image button
@@ -188,26 +216,37 @@ captureImg.addEventListener('change', (el) => {
   images.updateImageDisplay(preview, input);
 });
 
-// Button to insert the loaded image inside IndexedDB
+// Button to insert the loaded image into the pending image collection.
+// Images are written to IndexedDB when the inventory is saved.
 const addImg = document.querySelector('#image-add');
 addImg.addEventListener('click', (_) => {
   const selectedRow = document.querySelectorAll('.selected');
-  // Handle selected rows (one or none selected rows are available)
-  // With one row selected, the image will be linked to it
-  // With none selected, it will be linked with the activated inventory
-  if (selectedRow.length == 1){
-    // Select row id
-    const id = selectedRow[0].id;
-    // Add images inside the images.content
-    images.add(id, inventories.activeid);
-    images.resetDisplay(document.querySelector('.img-preview'));
+  const preview = document.querySelector('.img-preview');
 
-  } else if (selectedRow.length == 0) {
-    // Liked the image with the active inventory
-    images.add(inventories.activeid);
-    images.resetDisplay(document.querySelector('.img-preview'));
-  } else {
-    alert('Select only one row and try again.');
+  try {
+    if (selectedRow.length > 1) {
+      throw new Error('Select only one row and try again.');
+    }
+
+    let addedImages;
+
+    if (selectedRow.length === 1) {
+      addedImages = images.add(selectedRow[0].id, inventories.activeid);
+    } else {
+      addedImages = images.add(inventories.activeid);
+    }
+
+    images.resetDisplay(preview);
+    captureImg.value = '';
+
+    const noun = addedImages === 1 ? 'Image' : 'Images';
+    showAppMessage(
+      `${noun} added correctly. Save the inventory to store ${addedImages === 1 ? 'it' : 'them'}.`,
+      'success'
+    );
+  } catch (error) {
+    console.error('[Image insert error]', error);
+    showAppMessage(error.message || 'The image could not be added.', 'error');
   }
 });
 
