@@ -1,44 +1,66 @@
-// Gives the browser/config globals that classes.js expects
 import "fake-indexeddb/auto";
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
 
-global.confirm = vi.fn(() => true);
-global.alert = vi.fn();
+globalThis.confirm = vi.fn(() => true);
+globalThis.alert = vi.fn();
 
-global.inv_header = {
-  name: {
-    custom_name: "Inventory name",
-    form_type: "input",
-    input_type: "text",
-    required: true,
-    display_col: true
-  },
-  location: {
-    custom_name: "Location",
-    form_type: "input",
-    input_type: "text"
-  }
-};
+function resetConfiguration() {
+  globalThis.inv_header = {
+    plot_id: {
+      custom_name: "Plot ID",
+      form_type: "input",
+      input_type: "text",
+      required: true,
+      display_col: true
+    },
+    location: {
+      custom_name: "Location",
+      form_type: "input",
+      input_type: "text"
+    },
+    topography: {
+      custom_name: "Topography",
+      form_type: "select",
+      values: ["flat", "sloped"],
+      meanings: ["Flat", "Sloped"]
+    }
+  };
 
-global.inv_columns = {
-  species: {
-    custom_name: "Species",
-    form_type: "input",
-    input_type: "text"
-  },
-  dbh: {
-    custom_name: "DBH",
-    form_type: "input",
-    input_type: "number",
-    number_type: "float"
-  },
-  n: {
-    custom_name: "N",
-    form_type: "input",
-    input_type: "number",
-    number_type: "integer"
-  }
-};
+  globalThis.inv_columns = {
+    species: {
+      custom_name: "Species",
+      description: "Species name",
+      form_type: "input",
+      input_type: "text"
+    },
+    dbh_cm: {
+      custom_name: "DBH (cm)",
+      description: "Diameter at breast height",
+      form_type: "input",
+      input_type: "number",
+      number_type: "float"
+    },
+    tree: {
+      custom_name: "Tree #",
+      description: "Tree number",
+      form_type: "input",
+      input_type: "number",
+      number_type: "integer"
+    },
+    status: {
+      custom_name: "Status",
+      description: "Tree status",
+      form_type: "select",
+      values: ["LS", "DS"],
+      meanings: ["Live Standing", "Dead Standing"]
+    }
+  };
+}
 
-global.species_metadata = [];
-global.autocomplete = vi.fn();
+globalThis.resetTestConfiguration = resetConfiguration;
+
+beforeEach(() => {
+  resetConfiguration();
+  vi.clearAllMocks();
+  globalThis.confirm.mockReturnValue(true);
+});
