@@ -13,28 +13,28 @@ describe("Inventory", () => {
 
   it("creates an inventory only from configured metadata", () => {
     const inventory = new Inventory({
-      plot_id: "Plot 1",
-      location: "Zaragoza",
+      name: "Plot 1",
+      comment: "Zaragoza",
       ignored: "not stored"
     });
 
-    expect(inventory.plot_id).toBe("Plot 1");
-    expect(inventory.location).toBe("Zaragoza");
+    expect(inventory.name).toBe("Plot 1");
+    expect(inventory.comment).toBe("Zaragoza");
     expect(inventory.ignored).toBeUndefined();
     expect(inventory.created_at).toBeDefined();
   });
 
   it("serializes a new inventory including created_at", () => {
     const inventory = new Inventory({
-      plot_id: "Plot 1",
+      name: "Plot 1",
       location: "Zaragoza"
     });
 
     const data = inventory.parseIdb();
 
     expect(data).toMatchObject({
-      plot_id: "Plot 1",
-      location: "Zaragoza"
+      name: "Plot 1",
+      comment: "Zaragoza"
     });
     expect(data.created_at).toBe(inventory.created_at);
     expect(data.id).toBeUndefined();
@@ -44,8 +44,8 @@ describe("Inventory", () => {
     const createdAt = "2025-03-04T12:00:00.000Z";
     const inventory = new Inventory(
       {
-        plot_id: "Plot 1",
-        location: "Zaragoza",
+        name: "Plot 1",
+        comment: "Zaragoza",
         created_at: createdAt
       },
       7
@@ -59,7 +59,7 @@ describe("Inventory", () => {
 
   it("uses the configured display_col when rendering an inventory", () => {
     const inventory = new Inventory(
-      { plot_id: "PLOT-42", location: "Zaragoza" },
+      { name: "PLOT-42", comment: "Zaragoza" },
       7
     );
 
@@ -69,19 +69,19 @@ describe("Inventory", () => {
   });
 
   it("throws and warns when no display_col is configured", () => {
-    delete globalThis.inv_header.plot_id.display_col;
+    delete globalThis.inv_header.name.display_col;
 
-    const inventory = new Inventory({ plot_id: "PLOT-1" }, 1);
+    const inventory = new Inventory({ name: "PLOT-1" }, 1);
 
     expect(() => inventory.toHtml()).toThrow(/display_col/i);
     expect(globalThis.alert).toHaveBeenCalled();
   });
 
   it("throws and warns when more than one display_col is configured", () => {
-    globalThis.inv_header.location.display_col = true;
+    globalThis.inv_header.comment.display_col = true;
 
     const inventory = new Inventory(
-      { plot_id: "PLOT-1", location: "Zaragoza" },
+      { name: "PLOT-1", comment: "Zaragoza" },
       1
     );
 
@@ -96,8 +96,8 @@ describe("Inventory", () => {
     inventories.metadata = [
       new Inventory(
         {
-          plot_id: "PLOT-1",
-          location: "Old location",
+          name: "PLOT-1",
+          comment: "Old location",
           created_at: createdAt
         },
         10
@@ -109,8 +109,8 @@ describe("Inventory", () => {
     };
 
     const metadata = [
-      { id: "inventory-plot_id", value: "PLOT-1" },
-      { id: "inventory-location", value: "New location" },
+      { id: "inventory-name", value: "PLOT-1" },
+      { id: "inventory-comments", value: "New location" },
       { id: "inventory-topography", value: "" }
     ];
 
@@ -122,14 +122,14 @@ describe("Inventory", () => {
     const [saved, store] = dbHandler.addData.mock.calls[0];
     expect(store).toBe("inventories");
     expect(saved.id).toBe(10);
-    expect(saved.plot_id).toBe("PLOT-1");
+    expect(saved.name).toBe("PLOT-1");
     expect(saved.created_at).toBe(createdAt);
   });
 
   it("does not delete an inventory when confirmation is cancelled", async () => {
     globalThis.confirm.mockReturnValue(false);
 
-    const inventory = new Inventory({ plot_id: "PLOT-9" }, 9);
+    const inventory = new Inventory({ name: "PLOT-9" }, 9);
     const dbHandler = {
       deleteRecord: vi.fn(() => Promise.resolve())
     };
@@ -147,26 +147,26 @@ describe("Inventories", () => {
     const inventories = new Inventories();
 
     inventories.metadata = [
-      new Inventory({ plot_id: "Plot A", location: "A" }, 1),
-      new Inventory({ plot_id: "Plot B", location: "B" }, 2)
+      new Inventory({ name: "Plot A", comment: "A" }, 1),
+      new Inventory({ name: "Plot B", comment: "B" }, 2)
     ];
 
-    expect(inventories.selectById(2).plot_id).toBe("Plot B");
-    expect(inventories.selectByColumn("plot_id", "Plot A").location).toBe("A");
+    expect(inventories.selectById(2).name).toBe("Plot B");
+    expect(inventories.selectByColumn("name", "Plot A").comment).toBe("A");
   });
 
   it("detects equal inventory properties", () => {
     const inventories = new Inventories();
 
     const current = new Inventory({
-      plot_id: "Plot A",
-      location: "A",
+      name: "Plot A",
+      comment: "A",
       topography: "flat"
     }, 1);
 
     const next = new Inventory({
-      plot_id: "Plot A",
-      location: "A",
+      name: "Plot A",
+      comment: "A",
       topography: "flat"
     });
 
@@ -178,7 +178,7 @@ describe("Inventories", () => {
 
     const inventories = new Inventories();
     inventories.metadata = [
-      new Inventory({ plot_id: "PLOT-1", location: "A" }, 1)
+      new Inventory({ name: "PLOT-1", comment: "A" }, 1)
     ];
 
     const dbHandler = {
