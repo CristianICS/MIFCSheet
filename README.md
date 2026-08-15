@@ -67,7 +67,7 @@ The application has been tested in the following web browsers:
 | ---------------- | ------- |
 | Google Chrome | 133 |
 | Google Chrome for Android | 132 |
-| Firefox | 134 |
+| Firefox | 134; 153.0.4 |
 
 For best results, open the application using one of those browsers.
 
