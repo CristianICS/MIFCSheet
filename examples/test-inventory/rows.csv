@@ -1,4 +1,4 @@
-species,n,d,dl,dr,h,dma,dmi,rma,rmi,dbh_cm,comment,id,rown,inventories_id
-Pinus sylvestris L.,21,72,12,,1.29,,,65,43,65,,3,1,5
-Pinus halepensis Mill.,25,150,,35,1.68,,,98,65,97,,4,2,5
-Pinus sylvestris L.,21,250,56,,2.5,,,120,95,98,,5,3,5
+row_id,species,n,d,dl,dr,h,dma,dmi,rma,rmi,dbh_cm,comment,inventories_id
+1,Pinus sylvestris L.,21,72,12,,1.29,,,65,43,65,,5
+2,Pinus halepensis Mill.,25,150,,35,1.68,,,98,65,97,,5
+3,Pinus sylvestris L.,21,250,56,,2.5,,,120,95,98,,5
