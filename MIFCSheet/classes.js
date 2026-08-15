@@ -1546,7 +1546,11 @@ export class Download {
     
     // Use the column marked as display_col for the ZIP name
     const displayCol = getDisplayColumn()
-    const displayValue = this.inventory[displayCol];
+    
+    const displayValue = sanitizeFilename(
+      this.inventory[displayCol],
+      String(inventoryId)
+    );
 
     // Construct the output folder name
     this.foldername = `inventory_${displayValue}.zip`;
@@ -1712,4 +1716,16 @@ export class Download {
     });
 
   }
+}
+
+function sanitizeFilename(value, fallback = 'file') {
+  let filename = String(value ?? '').trim();
+
+  // Characters invalid in Windows filenames and ZIP paths
+  filename = filename.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
+
+  // Windows does not allow filenames ending in spaces or dots
+  filename = filename.replace(/[. ]+$/g, '');
+
+  return filename || fallback;
 }
