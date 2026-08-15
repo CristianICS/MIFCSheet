@@ -27,7 +27,7 @@ describe("Inventory", () => {
   it("serializes a new inventory including created_at", () => {
     const inventory = new Inventory({
       name: "Plot 1",
-      location: "Zaragoza"
+      comment: "Zaragoza"
     });
 
     const data = inventory.parseIdb();

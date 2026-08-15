@@ -1664,7 +1664,7 @@ export class Download {
       ...row
     }));
     
-    zip.file('rows.csv', this.arrayToCsv(this.rows));
+    zip.file('rows.csv', rowsForExport);
 
     // Add inventory images
     for (let img of this.inv_imgs) {
