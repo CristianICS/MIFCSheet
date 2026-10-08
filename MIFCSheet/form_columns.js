@@ -33,63 +33,81 @@ var inv_columns = {
         'description': 'Distance from the init of the central metric type to the measured species.',
         'form_type': 'input',
         'input_type': 'number',
-        'number_type': 'float'
+        'number_type': 'float',
+        'min': 0,
+        'max': 1000
     },
     'dl': {
         'custom_name': "dl",
         'description': 'Distance from central metric type to the measured species (left).',
         'form_type': 'input',
         'input_type': 'number',
-        'number_type': 'float'
+        'number_type': 'float',
+        'min': 0,
+        'max': 100
     },
     'dr': {
         'custom_name': "dr",
         'description': 'Distance from central metric type to the measured species (right).',
         'form_type': 'input',
         'input_type': 'number',
-        'number_type': 'float'
+        'number_type': 'float',
+        'min': 0,
+        'max': 100
     },
     'h': {
         'custom_name': "h",
         'description': 'Tree height (meters).',
         'form_type': 'input',
         'input_type': 'number',
-        'number_type': 'float'
+        'number_type': 'float',
+        'min': 0,
+        'max': 5000
     },
     'dma': {
         'custom_name': "Dma",
         'description': 'Major diameter (DBH < 2cm)',
         'form_type': 'input',
         'input_type': 'number',
-        'number_type': 'float'
+        'number_type': 'float',
+        'min': 0,
+        'max': 500
     },
     'dmi': {
         'custom_name': "Dmi",
         'description': 'Minor diameter (DBH < 2cm)',
         'form_type': 'input',
         'input_type': 'number',
-        'number_type': 'float'
+        'number_type': 'float',
+        'min': 0,
+        'max': 500
     },
     'rma': {
         'custom_name': "Rma",
         'description': 'Mayor radius (DBH >= 2cm)',
         'form_type': 'input',
         'input_type': 'number',
-        'number_type': 'float'
+        'number_type': 'float',
+        'min': 0,
+        'max': 250
     },
     'rmi': {
         'custom_name': "Rmi",
         'description': 'Minor radius (DBH >= 2cm)',
         'form_type': 'input',
         'input_type': 'number',
-        'number_type': 'float'
+        'number_type': 'float',
+        'min': 0,
+        'max': 250
     },
     'dbh_cm': {
         'custom_name': "DBH",
         'description': 'Distance to Breast Height (DBH >= 2cm)',
         'form_type': 'input',
         'input_type': 'number',
-        'number_type': 'float'
+        'number_type': 'float',
+        'min': 0,
+        'max': 500
     },
     'comment': {
         'custom_name': "Comments",

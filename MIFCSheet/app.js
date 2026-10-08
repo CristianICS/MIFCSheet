@@ -6,7 +6,9 @@ import {
   Inventories,
   Rows,
   Row,
-  init_inventory_panel
+  init_inventory_panel,
+  checkRange,
+  outOfRangeMessage
 } from "./classes.js";
 
 // Init global inventories class
@@ -69,15 +71,29 @@ newInvFormEl.addEventListener("submit", async (event) => {
   // Save inventory metadata inside IDB
   let metadata = document.querySelectorAll('.inv-mtd');
 
+  // Collect the displayed rows (only when one inventory is opened)
+  const isOpen = !isNaN(inventories.activeid);
+  let rows = new Rows();
+  if (isOpen) {
+    rows.collect();
+  }
+
+  // Ask once before saving out-of-range values (the data is never changed)
+  const outOfRange = [
+    ...Array.from(metadata)
+      .map((inp) => checkRange(inp.id.split('-')[1], inp.value, inv_header))
+      .filter(Boolean),
+    ...(isOpen ? rows.outOfRange() : [])
+  ];
+  if (outOfRange.length > 0 && !confirm(outOfRangeMessage(outOfRange))) {
+    return;
+  }
+
   await inventories.save(metadata, dbHandler);
   await inventories.load(dbHandler);
-  
-  // When one inventory is opened, save its rows too.
-  if (!isNaN(inventories.activeid)) {
-    // Initialize the 'rows' object and collect the displayed rows
-    let rows = new Rows();
-    rows.collect();
 
+  // When one inventory is opened, save its rows too.
+  if (isOpen) {
     // Guarantees that all row-save promises finish before them are read back
     await rows.save(inventories.activeid, dbHandler);
 

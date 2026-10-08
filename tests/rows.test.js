@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { Rows, Row } from "../MIFCSheet/classes.js";
+import {
+  Rows,
+  Row,
+  checkRange,
+  outOfRangeMessage,
+  init_inventory_panel
+} from "../MIFCSheet/classes.js";
 
 describe("Row", () => {
   it("creates a row with configured columns", () => {
@@ -198,5 +204,112 @@ describe("Rows", () => {
     ];
 
     await expect(rows.save(8, {})).rejects.toThrow("write failed");
+  });
+});
+
+describe("Range validation", () => {
+  beforeEach(() => {
+    globalThis.inv_columns.dbh_cm.min = 0;
+    globalThis.inv_columns.dbh_cm.max = 500;
+  });
+
+  it("checkRange flags values below and above the limits", () => {
+    expect(checkRange("dbh_cm", 600)).toEqual({
+      key: "dbh_cm",
+      value: 600,
+      min: 0,
+      max: 500,
+      reason: "dbh_cm = 600 is above the maximum (500)"
+    });
+    expect(checkRange("dbh_cm", -1).reason).toBe(
+      "dbh_cm = -1 is below the minimum (0)"
+    );
+  });
+
+  it("checkRange ignores values inside the limits, blanks and unlimited columns", () => {
+    expect(checkRange("dbh_cm", 0)).toBeNull();
+    expect(checkRange("dbh_cm", 500)).toBeNull();
+    expect(checkRange("dbh_cm", "")).toBeNull();
+    expect(checkRange("tree", 99999)).toBeNull();
+    expect(checkRange("species", "Pinus")).toBeNull();
+    expect(checkRange("unknown", 1)).toBeNull();
+  });
+
+  it("checkRange accepts a custom configuration (inventory header)", () => {
+    globalThis.inv_header.init_point_id.max = 100;
+
+    expect(checkRange("init_point_id", 101, inv_header).reason).toBe(
+      "init_point_id = 101 is above the maximum (100)"
+    );
+    expect(checkRange("init_point_id", 101)).toBeNull();
+  });
+
+  it("toHtml sets min/max only on columns with limits", () => {
+    const element = new Row([], false, { dbh_cm: 20, tree: 1 }).toHtml();
+    const dbh = element.querySelector("#dbh_cm-1");
+    const tree = element.querySelector("#tree-1");
+
+    expect(dbh.getAttribute("min")).toBe("0");
+    expect(dbh.getAttribute("max")).toBe("500");
+    expect(tree.hasAttribute("min")).toBe(false);
+    expect(tree.hasAttribute("max")).toBe(false);
+  });
+
+  it("shows and removes an inline message when an out-of-range value changes", () => {
+    const element = new Row([], false, { dbh_cm: 600 }).toHtml();
+    const dbh = element.querySelector("#dbh_cm-1");
+
+    dbh.dispatchEvent(new Event("change"));
+    expect(element.querySelector(".range-warning").textContent).toBe(
+      "dbh_cm = 600 is above the maximum (500)"
+    );
+
+    dbh.value = "20";
+    dbh.dispatchEvent(new Event("change"));
+    expect(element.querySelector(".range-warning")).toBeNull();
+  });
+
+  it("adds limits and the inline message to inventory header fields", () => {
+    globalThis.inv_header.init_point_id.max = 100;
+    document.body.innerHTML =
+      '<form id="inventory-form"><fieldset></fieldset></form>';
+
+    init_inventory_panel();
+    const input = document.querySelector("#inventory-init_point_id");
+
+    expect(input.getAttribute("max")).toBe("100");
+    input.value = "150";
+    input.dispatchEvent(new Event("change"));
+    expect(input.parentNode.querySelector(".range-warning").textContent).toBe(
+      "init_point_id = 150 is above the maximum (100)"
+    );
+  });
+
+  it("lists out-of-range rows and builds a single confirmation message", () => {
+    const rows = new Rows();
+    rows.arrays = [
+      new Row([], 1, { dbh_cm: 20 }, 1),
+      new Row([], 2, { dbh_cm: 600 }, 11),
+      new Row([], 3, { dbh_cm: 700 }, 18)
+    ];
+
+    const issues = rows.outOfRange();
+
+    expect(issues.map((issue) => issue.rown)).toEqual([11, 18]);
+    expect(outOfRangeMessage(issues)).toBe(
+      "2 values are out of range (rows 11, 18). Save anyway?"
+    );
+  });
+
+  it("mentions the inventory header in the confirmation message", () => {
+    const headerIssue = checkRange("dbh_cm", 600);
+    const rowIssue = { ...checkRange("dbh_cm", 700), rown: 4 };
+
+    expect(outOfRangeMessage([headerIssue])).toBe(
+      "1 value is out of range (inventory header). Save anyway?"
+    );
+    expect(outOfRangeMessage([rowIssue, headerIssue])).toBe(
+      "2 values are out of range (row 4; inventory header). Save anyway?"
+    );
   });
 });
