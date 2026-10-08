@@ -1,5 +1,5 @@
 // Version and Cache name will mantain a version control
-const VERSION = "v07";
+const VERSION = "v08";
 const CACHE_NAME = `forest-inventory-custom-${VERSION}`;
 // The static resources that the app needs to function.
 const APP_STATIC_RESOURCES = [
@@ -12,6 +12,7 @@ const APP_STATIC_RESOURCES = [
   "index.html",
   "inventory_header.js",
   "manifest.json",
+  "preview.js",
   "species.csv",
   "style.css",
   "sw.js",

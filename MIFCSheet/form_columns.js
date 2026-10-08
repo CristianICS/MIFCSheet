@@ -1,4 +1,7 @@
 
+// Inventory type. Enables MIFC-specific features (transect preview). Remove it for other inventory types.
+var inv_type = "MIFC";
+
 // Important: The order of appearance will be the same as the order in the application rows.
 var inv_columns = {
     'species': {
@@ -30,7 +33,7 @@ var inv_columns = {
     },
     'd': {
         'custom_name': "D",
-        'description': 'Distance from the init of the central metric type to the measured species.',
+        'description': 'Distance from the init of the central measuring tape to the measured species (centimeters).',
         'form_type': 'input',
         'input_type': 'number',
         'number_type': 'float',
@@ -39,7 +42,7 @@ var inv_columns = {
     },
     'dl': {
         'custom_name': "dl",
-        'description': 'Distance from central metric type to the measured species (left).',
+        'description': 'Distance from central measuring tape to the measured species (left, centimeters).',
         'form_type': 'input',
         'input_type': 'number',
         'number_type': 'float',
@@ -48,7 +51,7 @@ var inv_columns = {
     },
     'dr': {
         'custom_name': "dr",
-        'description': 'Distance from central metric type to the measured species (right).',
+        'description': 'Distance from central measuring tape to the measured species (right, centimeters).',
         'form_type': 'input',
         'input_type': 'number',
         'number_type': 'float',
@@ -57,7 +60,7 @@ var inv_columns = {
     },
     'h': {
         'custom_name': "h",
-        'description': 'Tree height (meters).',
+        'description': 'Plant height (centimeters).',
         'form_type': 'input',
         'input_type': 'number',
         'number_type': 'float',
@@ -102,7 +105,7 @@ var inv_columns = {
     },
     'dbh_cm': {
         'custom_name': "DBH",
-        'description': 'Distance to Breast Height (DBH >= 2cm)',
+        'description': 'Diameter at Breast Height (centimeters, DBH >= 2cm)',
         'form_type': 'input',
         'input_type': 'number',
         'number_type': 'float',

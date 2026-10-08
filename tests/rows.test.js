@@ -235,6 +235,18 @@ describe("Range validation", () => {
     expect(checkRange("unknown", 1)).toBeNull();
   });
 
+  it("flags negative point IDs with the official inventory header", async () => {
+    const { readFileSync } = await import("node:fs");
+    const src = readFileSync("MIFCSheet/inventory_header.js", "utf8");
+    const header = new Function(`${src}\nreturn inv_header;`)();
+
+    expect(checkRange("init_point_id", -3, header).reason).toBe(
+      "init_point_id = -3 is below the minimum (0)"
+    );
+    expect(checkRange("final_point_id", 0, header)).toBeNull();
+    expect(checkRange("final_point_id", 123456, header)).toBeNull();
+  });
+
   it("checkRange accepts a custom configuration (inventory header)", () => {
     globalThis.inv_header.init_point_id.max = 100;
 

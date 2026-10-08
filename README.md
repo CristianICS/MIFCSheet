@@ -36,6 +36,8 @@ Available parameters to include in *inventory_header.js*:
 | `custom_name` | Name describing the variable. |
 | `form_type` | Available options are input, select and textarea. HTML form elements where the variables are included. |
 | `input_type` | When `form_type` is input. Available options are text, number and select. |
+| `number_type` | When `input_type` is number. Available options are integer and float. |
+| `min` / `max` | Optional. Numeric fields with `number_type` only. Values outside the range are flagged, never blocked (see [Outlier checks](#outlier-checks)). |
 | `required` | If the variable is mandatory. Boolean. Default `false`. |
 | `display_col` | It is the column which will describe the inventory inside the panel containing all the collected inventories. Usually is a variable with a custom name giving more information than the auto-generated ID. Default `false`.|
 
@@ -47,11 +49,80 @@ Available parameters to include in *form_columns.js*:
 | `form_type` | Available options are input and select.
 | `input_type` | When `form_type` is input. Available options are text and number.
 | `number_type` | When `form_type` is input and input_type equals number. Available options are integer and float
+| `min` / `max` | Optional. Numeric columns with `number_type` only. Values outside the range are flagged, never blocked (see [Outlier checks](#outlier-checks)).
 | `values` | When `form_type` is select, this is the field where the user specifies the available options. List of possible values, e.g., [’N’, ’S’].
 | `meanings` | Descriptions for each of the values available, e.g., ['North', 'South'].
 | `autocomplete` | `true` or `false`. Specifies if current field has an autocomplete function. If it does, the `species.js` dictionary must contain entries related with the name of the `form_columns.js` dictionary's key.
 | `autocomplete_code` | `true` or `false`. If there is a column with `autocomplete`, the `autocomplete_code` column displays the code of the value inside autocomplete column.
 | `autocomplete_value` | Inside the `autocomplete_code` column, This parameter defines the column key that stores the values relating to the autocomplete code.
+
+Example of a numeric column with thresholds:
+
+```js
+'h': {
+    'custom_name': "h",
+    'description': 'Plant height (centimeters).',
+    'form_type': 'input',
+    'input_type': 'number',
+    'number_type': 'float',
+    'min': 0,
+    'max': 5000
+},
+```
+
+### Outlier checks
+
+Outlier checks are global: they work with any configuration. They never change the data, they only point out values to review.
+
+- **While typing.** The input turns red and a short message appears under it, e.g. "h = 5400.3 is above the maximum (5000)". Rows loaded from the browser storage are marked too.
+- **On save.** If any value is out of range, a single confirmation lists the affected rows, e.g. "2 values are out of range (rows 11, 18). Save anyway?". Cancel keeps the form open so the values can be fixed.
+
+### MIFC transect preview
+
+The transect preview is only available when *form_columns.js* declares the inventory type:
+
+```js
+var inv_type = "MIFC";
+```
+
+and contains all these columns: `species`, `d`, `dl`, `dr`, `h`, `dma`, `dmi`, `rma`, `rmi`, `dbh_cm`. Other configurations (and the ones without `inv_type`) work as before, without the preview.
+
+All distances and sizes are in **centimeters**:
+
+| Column | Meaning | min | max |
+| ------ | ------- | --- | --- |
+| `d` | Distance along the measuring tape (transect length 1000 cm) | 0 | 1000 |
+| `dl`, `dr` | Distance to the left / right of the tape (belt half-width 100 cm) | 0 | 100 |
+| `h` | Plant height | 0 | 5000 |
+| `dma`, `dmi` | Major / minor crown diameter (DBH < 2 cm) | 0 | 500 |
+| `rma`, `rmi` | Major / minor crown radius (DBH >= 2 cm) | 0 | 250 |
+| `dbh_cm` | Diameter at breast height | 0 | 500 |
+
+The preview opens from the **Preview** button in the inventory form (it includes unsaved edits) and from the **preview** link of each saved inventory. It has two views:
+
+- **Plan**: top-down view of the transect, left side above the tape and right side below. Crowns are drawn as ellipses (`2·rma × 2·rmi`, otherwise `dma × dmi`), as circles when only one axis is given, or as small dots when there is no crown measure.
+- **Profile**: side view with `d` on the x-axis and `h` on the y-axis. The y-axis stops at the `h` maximum, or at the 95th percentile × 1.2 if that is lower; taller plants are cut off with an ↑ arrow and their real value.
+
+Flagged plants get a red dashed outline and a "!" marker. Plants outside the transect (e.g. a mistyped `d`) are pinned to its edge and labelled with their real position. A **Warnings** list below the chart shows the row number and the reason; tapping an entry closes the preview and highlights that row's input.
+
+Besides the `min`/`max` thresholds, the preview applies these MIFC-only checks:
+
+| Check | Level |
+| ----- | ----- |
+| `d` missing | Error, plant not drawn |
+| Both `dl` and `dr` filled | Error, plant not drawn (side is ambiguous) |
+| Neither `dl` nor `dr` filled | Warning, drawn on the tape line |
+| Minor axis > major axis | Warning |
+| Both `dma/dmi` and `rma/rmi` filled | Warning, radii are used |
+
+### Downloaded files
+
+Each inventory is downloaded as `inventory_<name>.zip` with:
+
+- `inventory_metadata.csv`: inventory header.
+- `rows.csv`: inventory rows.
+- `inv_images/` and `row_images/`: inventory and row images.
+- `transect_preview.png` (MIFC only, when the inventory has rows): the plan and profile views, the legend and a short list of warnings. If the image cannot be created, the ZIP is downloaded without it.
 
 ## How to use
 

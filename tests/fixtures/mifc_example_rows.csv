@@ -1,0 +1,33 @@
+species,n,d,dl,dr,h,dma,dmi,rma,rmi,dbh_cm,comment,id,rown,inventories_id
+Larix laricina,10,980,36,NaN,49,10,3,NaN,NaN,NaN,,1,1,1
+Picea abies,NaN,975,75,NaN,37,20,5,NaN,NaN,NaN,Spruce,2,2,1
+Picea abies,NaN,995,50,NaN,30,20,15,NaN,NaN,NaN,Spruce ,3,3,1
+Picea abies,NaN,950,NaN,50,29,31,15,NaN,NaN,NaN,Spruce,4,4,1
+Picea abies,NaN,920,NaN,30,26,30,20,NaN,NaN,NaN,Spruce,5,5,1
+Picea abies,NaN,870,NaN,50,75,96,50,NaN,NaN,NaN,Spruce,6,6,1
+Larix laricina,10,870,NaN,100,4500.41,NaN,NaN,96,13,4.5,,7,7,1
+Picea abies,NaN,865,55,NaN,70,95,75,NaN,NaN,NaN,Spruce,8,8,1
+Picea abies,NaN,820,NaN,10,45,50,40,NaN,NaN,NaN,Spruce,9,9,1
+Picea abies,NaN,730,55,NaN,125,110,85,NaN,NaN,NaN,Spruce ,10,10,1
+Larix laricina,10,710,NaN,100,5400.3,NaN,NaN,70,25,5.3,,11,11,1
+Picea abies,NaN,632,22,NaN,150,NaN,NaN,65,7,3,Spruce,12,12,1
+Picea abies,NaN,520,NaN,46,200,112,20,NaN,NaN,1.5,Spruce,13,13,1
+Picea abies,NaN,530,15,NaN,195,90,22,NaN,NaN,NaN,,14,14,1
+Larix laricina,10,510,60,NaN,220,NaN,NaN,70,22,2.8,,15,15,1
+Larix laricina,10,440,95,NaN,250,NaN,NaN,195,150,7.8,Dead tree,16,16,1
+Picea abies,NaN,440,NaN,65,210,NaN,NaN,69,28,2.2,Spruce,17,17,1
+Larix laricina,10,410,NaN,100,7200.4,NaN,NaN,95,29,6.8,Dead,18,18,1
+Picea abies,NaN,310,NaN,22,35,45,15,NaN,NaN,NaN,Spruce,19,19,1
+Picea abies,NaN,280,70,NaN,35,60,60,NaN,NaN,NaN,Spruce ,20,20,1
+Picea abies,NaN,210,NaN,50,110,120,60,NaN,NaN,NaN,Spruce,21,21,1
+Larix laricina,10,180,85,NaN,50,55,25,NaN,NaN,NaN,,22,22,1
+Picea abies,NaN,198,45,NaN,45,50,15,NaN,NaN,NaN,Spruce,23,23,1
+Picea abies,NaN,155,20,NaN,45,45,30,NaN,NaN,NaN,Spruce,24,24,1
+Larix laricina,10,133,44,NaN,46,45,32,NaN,NaN,NaN,,25,25,1
+Picea abies,NaN,125,30,NaN,22,20,10,NaN,NaN,NaN,Spruce ,26,26,1
+Larix laricina,10,118,10,NaN,50,70,45,NaN,NaN,NaN,,27,27,1
+Picea abies,NaN,140,NaN,60,145,35,20,NaN,NaN,NaN,Spruce,28,28,1
+Larix laricina,10,128,NaN,65,60,60,30,NaN,NaN,NaN,,29,29,1
+Larix laricina,10,75,35,NaN,125,45,25,NaN,NaN,NaN,Dead,30,30,1
+Picea abies,NaN,60,65,NaN,50,130,22,NaN,NaN,NaN,Spruce,31,31,1
+Larix laricina,10,60,30,NaN,50,105,80,NaN,NaN,NaN,,32,32,1

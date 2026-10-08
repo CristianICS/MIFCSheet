@@ -1,3 +1,11 @@
+import {
+  isMifcInventory,
+  rowsToPlants,
+  validatePlants,
+  buildPreviewSvg,
+  svgToPngBlob
+} from './preview.js';
+
 /**
  * Get a JSON time in locale time.
  * https://stackoverflow.com/a/41467117/23551600
@@ -468,6 +476,13 @@ export class Inventory {
     const openBtn = document.createElement("a");
     openBtn.textContent = "open";
     openBtn.id = `open-${this.id}`;
+    // Preview the transect (MIFC only)
+    let previewBtn = null;
+    if (isMifcInventory()) {
+      previewBtn = document.createElement("a");
+      previewBtn.textContent = "preview";
+      previewBtn.id = `preview-${this.id}`;
+    }
     // Download inventory
     const downBtn = document.createElement("a");
     downBtn.textContent = "download";
@@ -478,6 +493,7 @@ export class Inventory {
     delBtn.id = `delete-${this.id}`;
 
     invControls.appendChild(openBtn);
+    if (previewBtn) invControls.appendChild(previewBtn);
     invControls.appendChild(downBtn);
     invControls.appendChild(delBtn);
     // Add controls to the inventory item
@@ -1754,6 +1770,17 @@ export class Download {
   }
 
   /**
+   * Render the MIFC transect preview of the rows as a PNG.
+   *
+   * @return {Promise<Blob>} The PNG image.
+   */
+  async previewPng() {
+    const { plants } = validatePlants(rowsToPlants(this.rows));
+    const svg = buildPreviewSvg(plants, this.inventory);
+    return svgToPngBlob(svg);
+  }
+
+  /**
    * Save data inside zip folder
    * 
    * Download the Download class elements inside a folder.
@@ -1776,6 +1803,17 @@ export class Download {
     const rowsCsv = this.arrayToCsv(rowsForExport);
 
     zip.file('rows.csv', rowsCsv);
+
+    // Add the transect preview (MIFC only). The ZIP is still downloaded
+    // without the image if rasterising fails.
+    if (isMifcInventory() && this.rows.length > 0) {
+      try {
+        const png = await this.previewPng();
+        zip.file('transect_preview.png', png, {binary: true});
+      } catch (error) {
+        console.error('Could not create the transect preview PNG.', error);
+      }
+    }
 
     // Add inventory images
     for (let img of this.inv_imgs) {

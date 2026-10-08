@@ -46,6 +46,18 @@ const ROWS = [
 
 const countPlants = (svg) => (svg.match(/<g class="plant/g) ?? []).length;
 
+/** Rows of the original 32-plant example inventory (no quoted fields). */
+function loadExampleRows() {
+  const [header, ...lines] = readFileSync(
+    resolve("tests/fixtures/mifc_example_rows.csv"), "utf8"
+  ).trim().split(/\r?\n/);
+  const columns = header.split(",");
+  return lines.map((line) => {
+    const values = line.split(",");
+    return Object.fromEntries(columns.map((col, i) => [col, values[i]]));
+  });
+}
+
 beforeEach(() => {
   useMifcConfig();
 });
@@ -146,6 +158,52 @@ describe("validatePlants", () => {
   });
 });
 
+describe("example inventory", () => {
+  const rows = loadExampleRows();
+
+  it("loads the 32 example rows", () => {
+    expect(rows.length).toBe(32);
+  });
+
+  it("flags only rows 11 and 18 (h above 5000), not row 7", () => {
+    const { plants, warnings } = validatePlants(rowsToPlants(rows));
+    expect(warnings.map(({ rown, key, level }) => ({ rown, key, level }))).toEqual([
+      { rown: 11, key: "h", level: "warning" },
+      { rown: 18, key: "h", level: "warning" }
+    ]);
+    expect(warnings.map((w) => w.reason)).toEqual([
+      "h = 5400.3 is above the maximum (5000)",
+      "h = 7200.4 is above the maximum (5000)"
+    ]);
+    const row7 = plants.find((p) => p.rown === 7);
+    expect(row7.h).toBe(4500.41);
+    expect(row7.flags).toEqual([]);
+  });
+
+  it("treats NaN cells as empty", () => {
+    const [first] = rowsToPlants(rows);
+    expect(first.y).toBe(36);
+    expect(first.dbh).toBeNull();
+    expect(first.crownMajor).toBe(10);
+    expect(first.crownMinor).toBe(3);
+  });
+
+  it("draws every plant, a 2-species legend and the warnings", () => {
+    const { plants } = validatePlants(rowsToPlants(rows));
+    expect(plants.every((p) => p.drawable)).toBe(true);
+    expect(countPlants(renderPlanView(plants))).toBe(32);
+    expect(countPlants(renderProfileView(plants))).toBe(32);
+
+    const legend = renderLegend(plants);
+    expect(legend).toContain("Larix laricina (12)");
+    expect(legend).toContain("Picea abies (20)");
+
+    const svg = buildPreviewSvg(plants, { name: "example" });
+    expect(svg).toContain("Warnings (2)");
+    expect(svg).toContain("Row 11: h = 5400.3 is above the maximum (5000)");
+  });
+});
+
 describe("rendering", () => {
   it("assigns colours in order of first appearance", () => {
     const colors = speciesColors(rowsToPlants(ROWS));
@@ -172,6 +230,30 @@ describe("rendering", () => {
     expect(svg).toContain(">5400.3<");
     expect(svg).toContain(">7200.4<");
     expect(svg).not.toContain(">4500.41<");
+  });
+
+  it("pins plants outside the transect to its edge and labels them", () => {
+    const plants = rowsToPlants([
+      { rown: 1, d: 9800, dl: 10, h: 50 },
+      { rown: 2, d: -20, dr: 900, h: 50 }
+    ]);
+    const plan = renderPlanView(plants);
+    // 60 px left margin + 1 px per cm
+    expect(plan).toContain('cx="1060"');
+    expect(plan).toContain('cx="60"');
+    expect(plan).toContain(">d 9800, dl 10<");
+    expect(plan).toContain(">d -20, dr 900<");
+    // dr 900 is pinned to the 400 cm limit below the tape (tape at y = 430)
+    expect(plan).toContain('cy="830"');
+
+    // Stems start on the ground line (y = 330)
+    const profile = renderProfileView(plants);
+    expect(profile).toContain('x1="1060" y1="330" x2="1060"');
+    expect(profile).toContain('x1="60" y1="330" x2="60"');
+  });
+
+  it("doesn't label plants inside the transect", () => {
+    expect(renderPlanView(rowsToPlants([{ d: 500, dl: 10 }]))).not.toContain(">d 500");
   });
 
   it("builds a legend with 2 species and the flagged marker", () => {

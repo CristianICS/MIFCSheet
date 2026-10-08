@@ -10,13 +10,15 @@ var inv_header = {
         'custom_name': "Initial point ID",
         'form_type': 'input',
         'input_type': 'number',
-        'number_type': 'integer'
+        'number_type': 'integer',
+        'min': 0
     },
     "final_point_id": {
         'custom_name': "Final point ID",
         'form_type': 'input',
         'input_type': 'number',
-        'number_type': 'integer'
+        'number_type': 'integer',
+        'min': 0
     },
     'comment': {
         'custom_name': "Comments",
