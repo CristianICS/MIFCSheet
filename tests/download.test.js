@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { Download, Inventory } from "../MIFCSheet/classes.js";
 
 class MockJSZip {
@@ -201,5 +201,90 @@ describe("Download", () => {
     await expect(download.download()).rejects.toThrow(
       /row number/i
     );
+  });
+
+  describe("transect preview PNG", () => {
+    const mifcColumns = Object.fromEntries(
+      ["species", "d", "dl", "dr", "h", "dma", "dmi", "rma", "rmi", "dbh_cm"]
+        .map((key) => [key, { form_type: "input", input_type: "number" }])
+    );
+
+    function mifcDownload(rows) {
+      const download = Object.create(Download.prototype);
+      download.foldername = "inventory_PLOT-1.zip";
+      download.inventory = {
+        name: "PLOT-1",
+        id: 10,
+        created_at: "2026-01-01T10:00:00.000Z"
+      };
+      download.rows = rows;
+      download.inv_imgs = [];
+      download.row_imgs = [];
+      // jsdom can't draw on a canvas
+      download.previewPng = vi.fn().mockResolvedValue("png-blob");
+      return download;
+    }
+
+    const filenames = () =>
+      MockJSZip.lastInstance.files.map((file) => file.name);
+
+    const ROWS = [
+      { id: 17, rown: 1, inventories_id: 10, species: "Larix decidua", d: 50, dl: 20, h: 50 }
+    ];
+
+    beforeEach(() => {
+      globalThis.inv_type = "MIFC";
+      globalThis.inv_columns = mifcColumns;
+    });
+
+    afterEach(() => {
+      delete globalThis.inv_type;
+    });
+
+    it("adds transect_preview.png for MIFC inventories", async () => {
+      const download = mifcDownload(ROWS);
+
+      await download.download();
+
+      const png = MockJSZip.lastInstance.files.find(
+        (file) => file.name === "transect_preview.png"
+      );
+      expect(png).toBeDefined();
+      expect(png.data).toBe("png-blob");
+      expect(globalThis.saveAs).toHaveBeenCalledWith("mock-blob", "inventory_PLOT-1.zip");
+    });
+
+    it("does not add the PNG when there are no rows", async () => {
+      const download = mifcDownload([]);
+
+      await download.download();
+
+      expect(download.previewPng).not.toHaveBeenCalled();
+      expect(filenames()).not.toContain("transect_preview.png");
+    });
+
+    it("does not add the PNG for non-MIFC configs", async () => {
+      delete globalThis.inv_type;
+      const download = mifcDownload(ROWS);
+
+      await download.download();
+
+      expect(download.previewPng).not.toHaveBeenCalled();
+      expect(filenames()).not.toContain("transect_preview.png");
+    });
+
+    it("still downloads the ZIP when rasterising fails", async () => {
+      const error = vi.spyOn(console, "error").mockImplementation(() => {});
+      const download = mifcDownload(ROWS);
+      download.previewPng.mockRejectedValue(new Error("canvas unavailable"));
+
+      await download.download();
+
+      expect(error).toHaveBeenCalled();
+      expect(filenames()).toContain("rows.csv");
+      expect(filenames()).not.toContain("transect_preview.png");
+      expect(globalThis.saveAs).toHaveBeenCalledWith("mock-blob", "inventory_PLOT-1.zip");
+      error.mockRestore();
+    });
   });
 });
