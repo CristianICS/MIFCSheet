@@ -1,3 +1,11 @@
+import {
+  isMifcInventory,
+  rowsToPlants,
+  validatePlants,
+  buildPreviewSvg,
+  svgToPngBlob
+} from './preview.js';
+
 /**
  * Get a JSON time in locale time.
  * https://stackoverflow.com/a/41467117/23551600
@@ -7,6 +15,96 @@ export function getTime() {
   // Locale date
   const loc_date= new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
   return loc_date.toJSON();
+}
+
+/**
+ * Check a numeric value against the optional `min`/`max` thresholds declared
+ * in the configuration files. The check never modifies the data.
+ *
+ * @param {String} key Column name.
+ * @param {*} value Value to check (blank values are never flagged).
+ * @param {Object} config Column definitions (inv_columns or inv_header).
+ * @returns {null|Object} null when the value is in range, otherwise
+ *   {key, value, min, max, reason}.
+ */
+export function checkRange(key, value, config = inv_columns) {
+  const meta = config[key];
+  if (!meta || !('number_type' in meta)) return null;
+  if (value === null || value === undefined || String(value).trim() === '') {
+    return null;
+  }
+
+  const num = Number(value);
+  if (Number.isNaN(num)) return null;
+
+  const { min, max } = meta;
+  let reason = null;
+  if (typeof min === 'number' && num < min) {
+    reason = `${key} = ${num} is below the minimum (${min})`;
+  } else if (typeof max === 'number' && num > max) {
+    reason = `${key} = ${num} is above the maximum (${max})`;
+  }
+
+  return reason ? { key, value: num, min, max, reason } : null;
+}
+
+/**
+ * Build the confirmation message shown before saving out-of-range values.
+ *
+ * @param {Array<Object>} issues checkRange() results. Row issues carry `rown`.
+ * @returns {String}
+ */
+export function outOfRangeMessage(issues) {
+  const n = issues.length;
+  const rowNums = [...new Set(
+    issues.filter((i) => i.rown).map((i) => i.rown)
+  )];
+  const places = [];
+  if (rowNums.length > 0) {
+    places.push(`${rowNums.length === 1 ? 'row' : 'rows'} ${rowNums.join(', ')}`);
+  }
+  if (issues.some((i) => !i.rown)) {
+    places.push('inventory header');
+  }
+  return `${n} ${n === 1 ? 'value is' : 'values are'} out of range ` +
+    `(${places.join('; ')}). Save anyway?`;
+}
+
+/**
+ * Set the HTML min/max attributes of a numeric input and show a short
+ * inline message under it when the typed value is out of range.
+ * Non-blocking: the value is kept as typed.
+ *
+ * @param {HTMLInputElement} inp Input element.
+ * @param {String} key Column name.
+ * @param {Object} config Column definitions (inv_columns or inv_header).
+ * @param {HTMLElement} container Element where the message is appended.
+ */
+function addRangeCheck(inp, key, config, container) {
+  const meta = config[key];
+  if (!meta || !('number_type' in meta)) return;
+  const hasMin = typeof meta.min === 'number';
+  const hasMax = typeof meta.max === 'number';
+  if (!hasMin && !hasMax) return;
+
+  if (hasMin) inp.setAttribute('min', meta.min);
+  if (hasMax) inp.setAttribute('max', meta.max);
+
+  inp.addEventListener('change', () => {
+    let msg = container.querySelector('.range-warning');
+    const issue = checkRange(key, inp.value, config);
+
+    if (!issue) {
+      if (msg) msg.remove();
+      return;
+    }
+    if (!msg) {
+      msg = document.createElement('small');
+      msg.classList.add('range-warning');
+      container.appendChild(msg);
+    }
+    msg.textContent = issue.reason;
+  });
 }
 
 export class IndexedDBHandler {
@@ -378,6 +476,13 @@ export class Inventory {
     const openBtn = document.createElement("a");
     openBtn.textContent = "open";
     openBtn.id = `open-${this.id}`;
+    // Preview the transect (MIFC only)
+    let previewBtn = null;
+    if (isMifcInventory()) {
+      previewBtn = document.createElement("a");
+      previewBtn.textContent = "preview";
+      previewBtn.id = `preview-${this.id}`;
+    }
     // Download inventory
     const downBtn = document.createElement("a");
     downBtn.textContent = "download";
@@ -388,6 +493,7 @@ export class Inventory {
     delBtn.id = `delete-${this.id}`;
 
     invControls.appendChild(openBtn);
+    if (previewBtn) invControls.appendChild(previewBtn);
     invControls.appendChild(downBtn);
     invControls.appendChild(delBtn);
     // Add controls to the inventory item
@@ -687,6 +793,7 @@ export var init_inventory_panel = function() {
                 inp.setAttribute('type', props['input_type']);
             }
             p.appendChild(inp);
+            addRangeCheck(inp, key, inv_header, p);
         }
         
         // Add the inventory header row to the HTML container
@@ -790,6 +897,22 @@ export class Rows {
       let newR = new Row(this.arrays, id, inputsDict, rown);
       this.arrays.push(newR);
     })
+  }
+
+  /**
+   * List every out-of-range value in the current rows.
+   *
+   * @returns {Array<Object>} checkRange() results, each with its `rown`.
+   */
+  outOfRange() {
+    const issues = [];
+    this.arrays.forEach((row) => {
+      row.cols.forEach((key) => {
+        const issue = checkRange(key, row[key]);
+        if (issue) issues.push({ ...issue, rown: row.rown });
+      });
+    });
+    return issues;
   }
 
   emptyRow() {
@@ -956,6 +1079,8 @@ export class Row {
           inp.setAttribute('placeholder', key);
           // Add class to retrieve inputs later
           inp.classList.add('row-input');
+          // Optional min/max thresholds (non-blocking warning)
+          addRangeCheck(inp, key, inv_columns, var_div);
       }
 
       // Autocomplete behavior is declared entirely in form_columns.js.
@@ -1645,6 +1770,17 @@ export class Download {
   }
 
   /**
+   * Render the MIFC transect preview of the rows as a PNG.
+   *
+   * @return {Promise<Blob>} The PNG image.
+   */
+  async previewPng() {
+    const { plants } = validatePlants(rowsToPlants(this.rows));
+    const svg = buildPreviewSvg(plants, this.inventory);
+    return svgToPngBlob(svg);
+  }
+
+  /**
    * Save data inside zip folder
    * 
    * Download the Download class elements inside a folder.
@@ -1667,6 +1803,17 @@ export class Download {
     const rowsCsv = this.arrayToCsv(rowsForExport);
 
     zip.file('rows.csv', rowsCsv);
+
+    // Add the transect preview (MIFC only). The ZIP is still downloaded
+    // without the image if rasterising fails.
+    if (isMifcInventory() && this.rows.length > 0) {
+      try {
+        const png = await this.previewPng();
+        zip.file('transect_preview.png', png, {binary: true});
+      } catch (error) {
+        console.error('Could not create the transect preview PNG.', error);
+      }
+    }
 
     // Add inventory images
     for (let img of this.inv_imgs) {

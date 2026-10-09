@@ -6,8 +6,16 @@ import {
   Inventories,
   Rows,
   Row,
-  init_inventory_panel
+  init_inventory_panel,
+  checkRange,
+  outOfRangeMessage
 } from "./classes.js";
+import {
+  highlightRow,
+  initPreviewButton,
+  openPreview,
+  rowsToPlants
+} from "./preview.js";
 
 // Init global inventories class
 var inventories = new Inventories();
@@ -69,15 +77,29 @@ newInvFormEl.addEventListener("submit", async (event) => {
   // Save inventory metadata inside IDB
   let metadata = document.querySelectorAll('.inv-mtd');
 
+  // Collect the displayed rows (only when one inventory is opened)
+  const isOpen = !isNaN(inventories.activeid);
+  let rows = new Rows();
+  if (isOpen) {
+    rows.collect();
+  }
+
+  // Ask once before saving out-of-range values (the data is never changed)
+  const outOfRange = [
+    ...Array.from(metadata)
+      .map((inp) => checkRange(inp.id.split('-')[1], inp.value, inv_header))
+      .filter(Boolean),
+    ...(isOpen ? rows.outOfRange() : [])
+  ];
+  if (outOfRange.length > 0 && !confirm(outOfRangeMessage(outOfRange))) {
+    return;
+  }
+
   await inventories.save(metadata, dbHandler);
   await inventories.load(dbHandler);
-  
-  // When one inventory is opened, save its rows too.
-  if (!isNaN(inventories.activeid)) {
-    // Initialize the 'rows' object and collect the displayed rows
-    let rows = new Rows();
-    rows.collect();
 
+  // When one inventory is opened, save its rows too.
+  if (isOpen) {
     // Guarantees that all row-save promises finish before them are read back
     await rows.save(inventories.activeid, dbHandler);
 
@@ -99,6 +121,33 @@ newInvFormEl.addEventListener("submit", async (event) => {
   }
 });
 
+/**
+ * Open a stored inventory: populate the form and show its rows.
+ *
+ * @param {Number} id Inventory id.
+ */
+async function openInventory(id) {
+  // Select inventory by ID and populate the info inside the form
+  inventories.selectById(id).populate();
+  // Update the activate ID
+  inventories.activeid = id;
+  // Update UI
+  // Hide the saved inventories form
+  document.getElementById('saved-inventories').innerHTML = "";
+  // Change #app-main-form-title
+  let editTitle = "Fill in"
+  document.getElementById('app-main-form-title').textContent = editTitle;
+  // Change #app-main-form-btn text
+  document.getElementById('app-main-form-btn').textContent = "Save";
+  // Display the row panel
+  document.getElementById('rows-form').style.display = 'block';
+  exitInventoryBtn.style.display = 'inline-block';
+  // Show rows
+  let rows = new Rows();
+  await rows.init(id, dbHandler);
+  rows.show();
+}
+
 // Get saved inventories buttons parent HTML block
 const savedInventoriesEl = document.getElementById("saved-inventories");
 // Handle saved inventories functions
@@ -109,25 +158,7 @@ savedInventoriesEl.addEventListener("click", async (event) => {
     case 'open': // The user wants to open a stored inventory
       // Get inventory id (inside button id)
       var id = parseInt(idParts[1]);
-      // Select inventory by ID and populate the info inside the form
-      inventories.selectById(id).populate();
-      // Update the activate ID
-      inventories.activeid = id;
-      // Update UI
-      // Hide the saved inventories form
-      document.getElementById('saved-inventories').innerHTML = "";
-      // Change #app-main-form-title
-      let editTitle = "Fill in"
-      document.getElementById('app-main-form-title').textContent = editTitle;
-      // Change #app-main-form-btn text
-      document.getElementById('app-main-form-btn').textContent = "Save";
-      // Display the row panel
-      document.getElementById('rows-form').style.display = 'block';
-      exitInventoryBtn.style.display = 'inline-block';
-      // Show rows
-      let rows = new Rows();
-      await rows.init(id, dbHandler);
-      rows.show();
+      await openInventory(id);
       break;
     case 'download':
       // Get inventory id (inside button id)
@@ -135,6 +166,19 @@ savedInventoriesEl.addEventListener("click", async (event) => {
       var downData = new Download(id, inventories);
       // Fetch data and download
       downData.fetchData(dbHandler);
+      break;
+    case 'preview': // Preview the saved transect (MIFC only)
+      var id = parseInt(idParts[1]);
+      var savedRows = new Rows();
+      await savedRows.init(id, dbHandler);
+      // The rows are not in the form yet: open the inventory before
+      // highlighting the row of a tapped warning.
+      openPreview(rowsToPlants(savedRows.arrays), inventories.selectById(id), {
+        onWarning: async (rown, key) => {
+          await openInventory(id);
+          highlightRow(rown, key);
+        }
+      });
       break;
     case 'delete':
       // Get inventory id (inside button id)
@@ -186,6 +230,12 @@ rowsEl.addEventListener("click", async (event) => {
         break;
       case 'img': // The user wants to link an image inside the selected row
         images.openImageDisplay();
+        break;
+      case 'preview': // Preview the transect, including unsaved edits
+        var rows = new Rows();
+        rows.collect();
+        openPreview(rowsToPlants(rows.arrays), formMetadata());
+        break;
     }
   }
 
@@ -202,6 +252,18 @@ rowsEl.addEventListener("click", async (event) => {
     }
   }
 });
+
+// Inventory metadata as currently typed in the form (inventory-{key} inputs)
+function formMetadata() {
+  const metadata = {};
+  document.querySelectorAll('.inv-mtd').forEach((inp) => {
+    metadata[inp.id.replace(/^inventory-/, '')] = inp.value;
+  });
+  return metadata;
+}
+
+// Transect preview button (only for the MIFC configuration)
+initPreviewButton();
 
 // Keep the title as an alternative way to exit an opened inventory.
 const appTitle = document.querySelector('#app-title');

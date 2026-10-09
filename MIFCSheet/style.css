@@ -121,6 +121,24 @@ li:nth-of-type(even) {
 /* Define the selected row background color */
 .selected {background-color: #93E7FC !important;}
 
+/* Out-of-range values (min/max in the config files). Non-blocking. */
+input:out-of-range {
+  border: 2px solid #d62728;
+  background-color: #fdecea;
+}
+.range-warning {
+  color: #b71c1c;
+  font-size: 0.8em;
+  margin: 0 2px;
+}
+
+/* Input highlighted after tapping a preview warning */
+.preview-highlight {
+  outline: 3px solid #d62728;
+  outline-offset: 1px;
+  background-color: #fff3cd;
+}
+
 .autocomplete {
   /*the container must be positioned relative:*/
   position: relative;
@@ -263,6 +281,110 @@ li:nth-of-type(even) {
   font-family: monospace;
   font-weight: bold;
   font-size: 1.4em;
+}
+
+/* Transect preview modal (MIFC only). Same layout as the image panel. */
+.preview-container {
+  background-color: #ffffff;
+  border: 2px solid black;
+  border-radius: 5px;
+  box-sizing: border-box;
+  max-height: 90vh;
+  padding: 3vh 3vw;
+  top: 5vh;
+  width: 96vw;
+  left: 2vw;
+
+  position: fixed;
+  overflow-y: auto;
+  z-index: 5;
+}
+
+.preview-panel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.2em;
+}
+
+.preview-panel h3 {
+  margin: 1rem 0 0.3rem;
+  font-size: 1em;
+}
+
+.preview-tabs {
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.preview-tabs button {
+  padding: 4px 14px;
+  border: 1px solid #2b2d42;
+  border-radius: 5px;
+  background-color: #ffffff;
+  color: #2b2d42;
+  cursor: pointer;
+}
+
+.preview-tabs button.active {
+  background-color: #2b2d42;
+  color: #ffffff;
+}
+
+/* The plan view is 1 px per cm: keep it readable and scroll sideways */
+.preview-scroll {
+  overflow-x: auto;
+  border: 1px solid #d4d4d4;
+  border-radius: 5px;
+}
+
+.preview-scroll svg {
+  display: block;
+  min-width: 700px;
+  width: 100%;
+  height: auto;
+}
+
+/* Legend scales with the screen */
+.preview-legend svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.preview-view .plant {
+  cursor: pointer;
+}
+
+.preview-view .plant:hover ellipse,
+.preview-view .plant:hover circle {
+  fill-opacity: 0.8;
+}
+
+.preview-tooltip {
+  min-height: 1.3em;
+  margin: 0.4rem 0;
+  font-size: 0.9em;
+  color: #555555;
+}
+
+/* Warnings list below the chart */
+.preview-warnings {
+  max-height: 25vh;
+  overflow-y: auto;
+  margin: 0;
+}
+
+.preview-warning {
+  cursor: pointer;
+}
+
+.preview-warning:hover {
+  text-decoration: underline;
+}
+
+.preview-warning--error {
+  color: #b71c1c;
+  font-weight: bold;
 }
 
 /* Bottom container with logos */

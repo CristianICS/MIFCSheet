@@ -9,6 +9,10 @@ const indexPath = resolve(process.cwd(), "MIFCSheet", "index.html");
 const swSource = readFileSync(swPath, "utf8");
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 const indexSource = readFileSync(indexPath, "utf8");
+const styleSource = readFileSync(
+  resolve(process.cwd(), "MIFCSheet", "style.css"),
+  "utf8"
+);
 
 describe("PWA update and deployment configuration", () => {
   it("uses a versioned cache", () => {
@@ -16,6 +20,24 @@ describe("PWA update and deployment configuration", () => {
       /const\s+VERSION\s*=\s*["']v\d+["']/
     );
     expect(swSource).toContain("CACHE_NAME");
+  });
+
+  it("caches the preview module for offline use", () => {
+    expect(swSource).toMatch(/["']preview\.js["']/);
+  });
+
+  it("styles out-of-range inputs and the preview modal", () => {
+    expect(styleSource).toMatch(/:out-of-range/);
+    for (const selector of [
+      ".range-warning",
+      ".preview-highlight",
+      ".preview-container",
+      ".preview-tabs",
+      ".preview-scroll",
+      ".preview-warning--error"
+    ]) {
+      expect(styleSource).toContain(selector);
+    }
   });
 
   it("activates a newly installed worker immediately", () => {
